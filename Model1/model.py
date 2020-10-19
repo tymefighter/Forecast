@@ -1,5 +1,6 @@
 from train import trainModel
 from initial import initializeModel
+from predict import predictOutput
 
 class Model:
 
@@ -34,15 +35,13 @@ class Model:
         X, 
         Y, 
         seqLength,
-        modelFilepath = None,
-        currSeq = None
+        currTimestep = None
     ):
         self.trainModel(
             X, 
             Y, 
             seqLength,
-            modelFilepath,
-            currSeq
+            currTimestep
         )
 
     def predict(self, X):

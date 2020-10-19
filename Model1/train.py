@@ -142,12 +142,13 @@ def trainModel(
     X, 
     Y,
     seqLength,
-    modelFilepath = None,
-    currSeq = None
+    currTimestep = None
 ):
     seqStartTime = self.windowSize
-    n = X.shape[0]
+    if currTimestep is not None:
+        seqStartTime = max(seqStartTime, currTimestep)
 
+    n = X.shape[0]
     while seqStartTime < n:
         seqEndTime = min(
             n - 1, 
