@@ -29,7 +29,7 @@ def buildMemory(
     currentTime
 ):
     if currentTime < self.windowSize:
-        raise Exception("Cannot Construct Memory")
+        raise Exception('Cannot Construct Memory')
 
     sampleLow = 0
     sampleHigh = currentTime - self.windowSize
