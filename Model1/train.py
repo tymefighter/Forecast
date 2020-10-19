@@ -57,14 +57,21 @@ def trainOneTimestep(
     X,
     Y,
     currentTime,
-    outerGradientTape
+    outerGradientTape,
+    numNormalEvents,
+    numExtremeEvents
 ):
     with outerGradientTape.stop_recording():
 
         with tf.GradientTape() as innerGradientTape:
             self.buildMemory(X, Y, currentTime)
             pred = self.memOut(self.S)
-            loss = loss2(pred, self.q)
+            loss = loss2(
+                pred, 
+                self.q
+                numNormalEvents,
+                numExtremeEvents
+            )
 
         trainableVars = self.gru.trainable_variables \
             + self.memOut.trainable_variables
@@ -86,16 +93,21 @@ def trainOneTimestep(
 
     if Y[i] > self.epsilon:
         extremeTarget = 1
+        numExtremeEvents += 1
     else:
         extremeTarget = 0
+        numNormalEvents += 1
 
     yPred = semiPred + self.b * ext
     return loss1(
         yPred, 
         Y[currentTime], 
         extremePred, 
-        extremeTarget
-    ), nextState
+        extremeTarget,
+        self.extremeLossWeight,
+        numNormalEvents,
+        numExtremeEvents
+    ), nextState, numNormalEvents, numExtremeEvents
 
 def trainOneSeq(
     self,
@@ -104,13 +116,15 @@ def trainOneSeq(
     seqStartTime, 
     seqEndTime
 ):
+
     with t.GradientTape() as tape:
+        numNormalEvents = numExtremeEvents = 0
+
         state = self.gru.get_initial_state()
         loss = 0
         for t in range(seqStartTime, seqEndTime + 1):
-            currLoss, state = self.trainOneTimestep(
-                state
-            )
+            currLoss, state, numNormalEvents, numExtremeEvents = \
+                self.trainOneTimestep(state)
             loss += currLoss
     
     trainableVars = self.gru.trainable_variables \
