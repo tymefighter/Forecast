@@ -1,3 +1,6 @@
+from train import trainModel
+from initial import initializeModel
+
 class Model:
 
     def __init__(
@@ -5,10 +8,26 @@ class Model:
         memorySize,
         windowSize,
         threshold,
+        inputDimension,
+        hiddenStateSize,
+        extremeValueIndex,
         optimizer,
+        extremeLossWeight,
         modelPath = None
     ):
-        pass
+        if modelPath is not None:
+            self.loadModel(modelPath)
+        else:
+            self.initializeModel(
+                memorySize,
+                windowSize,
+                threshold,
+                inputDimension,
+                hiddenStateSize,
+                extremeValueIndex,
+                extremeLossWeight,
+                optimizer
+            )
 
     def train(
         self,
@@ -18,7 +37,13 @@ class Model:
         modelFilepath = None,
         currSeq = None
     ):
-        pass
+        self.trainModel(
+            X, 
+            Y, 
+            seqLength,
+            modelFilepath,
+            currSeq
+        )
 
     def predict(self, X):
         pass
