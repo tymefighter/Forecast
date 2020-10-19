@@ -3,6 +3,7 @@ import numpy as np
 
 from predict import computeAttentionWeights
 from loss import loss1, loss2
+from saveLoad import saveModel
 
 def runGruOnWindow(
     self,
@@ -98,7 +99,7 @@ def trainOneTimestep(
         extremeTarget = 0
         numNormalEvents += 1
 
-    yPred = semiPred + self.b * ext
+    yPred = semiPred + self.b * extremePred
     return loss1(
         yPred, 
         Y[currentTime], 
@@ -142,7 +143,8 @@ def trainModel(
     X, 
     Y,
     seqLength,
-    currTimestep = None
+    currTimestep,
+    modelFilepath
 ):
     seqStartTime = self.windowSize
     if currTimestep is not None:
@@ -157,5 +159,8 @@ def trainModel(
 
         self.trainOneSeq(X, Y, seqStartTime, seqEndTime)
         seqStartTime += self.windowSize
+
+        if modelFilepath is not None:
+            self.saveModel(modelFilepath)
 
     self.buildMemory(X, Y, n)

@@ -1,6 +1,7 @@
 from train import trainModel
 from initial import initializeModel
 from predict import predictOutput
+from saveLoad import saveModel, loadModel
 
 class Model:
 
@@ -35,20 +36,22 @@ class Model:
         X, 
         Y, 
         seqLength,
-        currTimestep = None
+        currTimestep = None,
+        modelFilepath = None
     ):
         self.trainModel(
             X, 
             Y, 
             seqLength,
-            currTimestep
+            currTimestep,
+            modelFilepath
         )
 
     def predict(self, X):
-        pass
+        return self.predictOutput(X)
 
-    def saveModel(self, modelFilepath):
-        pass
+    def save(self, modelFilepath):
+        self.saveModel(modelFilepath)
 
-    def loadModel(self, modelFilepath):
-        pass
+    def load(self, modelFilepath):
+        self.loadModel(modelFilepath)
