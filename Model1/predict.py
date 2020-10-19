@@ -2,4 +2,7 @@ def computeAttentionWeights(
     self
     state,
 ):
-    pass
+    return tf.squeeze(tf.nn.softmax(np.dot(
+        self.S,
+        state
+    )))
