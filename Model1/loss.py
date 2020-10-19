@@ -4,7 +4,7 @@ def squareLoss(yPred, yTrue):
 def extremeValueLoss(pred, target):
     pass
 
-def loss1(yPred, yTrue, pred, target):
+def loss1(yPred, yTrue, extremePred, extremeTarget):
     pass
 
 def loss2(preds, targets):
