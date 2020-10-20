@@ -1,9 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from predict import computeAttentionWeights
-from loss import loss1, loss2
-from saveLoad import saveModel
+from model.loss import loss1, loss2
 
 def runGruOnWindow(
     self,

@@ -1,9 +1,9 @@
-from train import trainModel
-from initial import initializeModel
-from predict import predictOutput
-from saveLoad import saveModel, loadModel
+from model.train import trainModel
+from model.initial import initializeModel
+from model.predict import predictOutput
+from model.saveLoad import saveModel, loadModel
 
-class Model:
+class Model():
     """
     Class implementing the following paper,
 
