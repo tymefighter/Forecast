@@ -1,9 +1,14 @@
 import pickle
 
 def saveModel(self, modelFilepath):
+    """Save the Model Information
+
+    self: The object that called this method
+    modelFilepath: Path where to save the model information
+    """
 
     if self.S is None:
-        raise Exception('Memory not construct - cannot save model')
+        raise Exception('Memory not constructed - cannot save model')
     
     saveDict = {
         'memorySize' : self.memorySize,
@@ -27,6 +32,12 @@ def saveModel(self, modelFilepath):
     fl.close()
 
 def loadModel(self, modelFilepath):
+    """Load the Model Information
+
+    self: The object that called this method
+    modelFilepath: Path from where to load the model
+    information
+    """
     
     fl = open(modelFilepath, 'rb')
     saveDict = pickle.load(fl)
