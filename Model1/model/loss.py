@@ -15,7 +15,8 @@ def extremeValueLoss(
     pred, 
     target,
     numNormalEvents,
-    numExtremeEvents
+    numExtremeEvents,
+    extremeValueIndex
 ):
     """Extreme Value Loss
 
@@ -25,6 +26,8 @@ def extremeValueLoss(
     numNormalEvents: Number of normal events seen uptil now,
     it is a scalar
     numExtremeEvents: Number of extreme events seen uptil now,
+    it is a scalar
+    extremeValueIndex: The extreme value index parameter,
     it is a scalar
 
     Returns the extreme value loss, it is a scalar
@@ -36,16 +39,16 @@ def extremeValueLoss(
 
     extremePart = - fractionNormal \
         * tf.math.pow(
-            1 - pred / self.extremeValueIndex, 
-            self.extremeValueIndex
+            1 - pred / extremeValueIndex, 
+            extremeValueIndex
         ) \
         * target \
         * tf.math.log(pred)
 
     normalPart = - fractionExtreme \
         * tf.math.pow(
-            1 - (1 - pred) / self.extremeValueIndex, 
-            self.extremeValueIndex
+            1 - (1 - pred) / extremeValueIndex, 
+            extremeValueIndex
         ) \
         * (1 - target) \
         * tf.math.log(1 - pred)
@@ -59,7 +62,8 @@ def loss1(
     extremeTarget,
     extremeWeight,
     numNormalEvents,
-    numExtremeEvents
+    numExtremeEvents,
+    extremeValueIndex
 ):
     """ Loss Function For the Model
     
@@ -73,6 +77,8 @@ def loss1(
     a scalar
     numExtremeEvents: Number of extreme events seen uptil now, it is
     a scalar
+    extremeValueIndex: The extreme value index parameter,
+    it is a scalar
 
     Returns the Loss value for the given input, the returned value is
     a scalar
@@ -82,7 +88,8 @@ def loss1(
                 extremePred, 
                 extremeTarget,
                 numNormalEvents,
-                numExtremeEvents
+                numExtremeEvents,
+                extremeValueIndex
             )
 
 """Loss Function for Enchancing Memory

@@ -54,7 +54,7 @@ def buildMemory(
 
     It throws an Exception if it cannot construct memory
     """
-    if currentTime < self.windowSize - 1:
+    if currentTime < self.windowSize + 1:
         raise Exception('Cannot Construct Memory')
 
     sampleLow = 0
@@ -70,13 +70,13 @@ def buildMemory(
         )
 
         self.S[i] = self.runGruOnWindow(X, windowStartTime)
-        if Y[windowStartTime + self.windowSize] > self.epsilon:
-            self.q[i] = 1
+        if Y[windowStartTime + self.windowSize] > self.threshold:
+            self.q[i] = 1.0
         else:
-            self.q[i] = 0
+            self.q[i] = 0.0
 
-    self.S = np.array(self.S)
-    self.q = np.array(self.q)
+    self.S = tf.stack(self.S)
+    self.q = tf.stack(self.q)
 
 def trainOneTimestep(
     self,
@@ -117,13 +117,15 @@ def trainOneTimestep(
     with outerGradientTape.stop_recording():
 
         with tf.GradientTape() as innerGradientTape:
+
             self.buildMemory(X, Y, currentTime)
             pred = self.memOut(self.S)
             loss = loss2(
                 pred, 
                 self.q,
                 numNormalEvents,
-                numExtremeEvents
+                numExtremeEvents,
+                self.extremeValueIndex
             )
 
         trainableVars = self.gru.trainable_variables \
@@ -135,10 +137,10 @@ def trainOneTimestep(
             trainableVars
         ))
 
-    nextState, _ = self.gru(X[currentTime], gruState)
+    nextState, _ = self.gru(np.expand_dims(X[currentTime], 0), gruState)
     semiPred = self.out(np.expand_dims(nextState, 0))
 
-    attentionWeights = self.computeAttentionWeights(nextState)
+    attentionWeights = self.computeAttentionWeights(tf.squeeze(nextState))
     extremePred = tf.math.reduce_sum(
         attentionWeights * self.q, 
         axis = 0
@@ -166,7 +168,7 @@ def trainOneSeq(
     and Y[seqStartTime : seqEndTime + 1]. This function trains the
     model parameters on this sequence
     """
-    with t.GradientTape() as tape:
+    with tf.GradientTape() as tape:
         numNormalEvents = numExtremeEvents = 0
         state = self.gru.get_initial_state(
             batch_size = 1, 
@@ -177,11 +179,11 @@ def trainOneSeq(
         extremePredSeq = []
         extremeTargetSeq = []
         for t in range(seqStartTime, seqEndTime + 1):
-            if Y[i] > self.epsilon:
-                extremeTarget = 1
+            if Y[t] > self.threshold:
+                extremeTarget = 1.0
                 numExtremeEvents += 1
             else:
-                extremeTarget = 0
+                extremeTarget = 0.0
                 numNormalEvents += 1
 
             yPred, extremePred, state = self.trainOneTimestep(
@@ -209,7 +211,8 @@ def trainOneSeq(
             extremeTargetSeq,
             self.extremeLossWeight,
             numNormalEvents,
-            numExtremeEvents
+            numExtremeEvents,
+            self.extremeValueIndex
         )
     
     trainableVars = self.gru.trainable_variables \
@@ -239,13 +242,13 @@ def trainModel(
     except maybe the last would have length equal to seqLength
     currTimestep: We have to begin from here if not None and
     has value greater than or equall to windowSize, else we begin
-    from windowSize
+    from windowSize + 1
     modelFilepath: Save model parameters to this path after every
     sequence if not None, else don't save 
 
     Train the model using the provided data and information
     """
-    seqStartTime = self.windowSize
+    seqStartTime = self.windowSize + 1
     if currTimestep is not None:
         seqStartTime = max(seqStartTime, currTimestep)
 
@@ -265,4 +268,4 @@ def trainModel(
         if modelFilepath is not None:
             self.saveModel(modelFilepath)
 
-    self.buildMemory(X, Y, n)
+    self.buildMemory(X, Y, n + 1)

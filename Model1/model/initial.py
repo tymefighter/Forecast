@@ -62,4 +62,4 @@ def initializeModel(
         input_shape = (self.hiddenStateSize,)
     )
 
-    self.b = tf.Variable(0)
+    self.b = tf.Variable(0.0)

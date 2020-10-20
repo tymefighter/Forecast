@@ -1,3 +1,6 @@
+import tensorflow as tf
+import numpy as np
+
 def computeAttentionWeights(
     self,
     state
@@ -19,7 +22,7 @@ def computeAttentionWeights(
     is the attention weight corresponding to the ith sequence summary,
     self.S[i]
     """
-    return tf.squeeze(tf.nn.softmax(np.dot(
+    return tf.squeeze(tf.nn.softmax(tf.linalg.matmul(
         self.S,
         tf.expand_dims(state, axis = 1)
     )), axis = 1)
