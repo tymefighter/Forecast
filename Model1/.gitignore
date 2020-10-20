@@ -1,0 +1,8 @@
+__pycache__
+__pycache__/*
+.ipynb_checkpoints/
+.ipynb_checkpoints/*
+.DS_Store
+model/.DS_Store
+model/__pycache__/
+model/__pycache__/*
