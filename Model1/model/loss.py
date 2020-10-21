@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+EPS = 1e-8
+
 def squareLoss(yPred, yTrue):
     """Square Loss Between Prediction and Target
     
@@ -43,7 +45,7 @@ def extremeValueLoss(
             extremeValueIndex
         ) \
         * target \
-        * tf.math.log(pred)
+        * tf.math.log(pred + EPS)
 
     normalPart = - fractionExtreme \
         * tf.math.pow(
@@ -51,7 +53,7 @@ def extremeValueLoss(
             extremeValueIndex
         ) \
         * (1 - target) \
-        * tf.math.log(1 - pred)
+        * tf.math.log(1 - pred + EPS)
 
     return tf.math.reduce_sum(extremePart + normalPart)
 

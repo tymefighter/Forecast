@@ -25,7 +25,7 @@ def computeAttentionWeights(
     return tf.squeeze(tf.nn.softmax(tf.linalg.matmul(
         self.S,
         tf.expand_dims(state, axis = 1)
-    )), axis = 1)
+    ), axis = 0), axis = 1)
 
 def predictOneTimestep(
     self,
