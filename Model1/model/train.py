@@ -266,7 +266,7 @@ def trainModel(
     while seqStartTime < n:
         seqEndTime = min(
             n - 1, 
-            seqStartTime + self.windowSize - 1
+            seqStartTime + seqLength - 1
         )
         
         startTime = time.time()
@@ -283,7 +283,7 @@ def trainModel(
                 + f' | Loss: {loss}'
             )
 
-        seqStartTime += self.windowSize
+        seqStartTime += seqLength
 
         if modelFilepath is not None:
             self.saveModel(modelFilepath)
