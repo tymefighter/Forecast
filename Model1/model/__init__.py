@@ -51,8 +51,6 @@ class Model:
         Initialize the model parameters and hyperparameters of the model
         """
 
-
-
         if modelPath is not None:
             self.loadModel(modelPath)
         else:
@@ -73,7 +71,8 @@ class Model:
         Y, 
         seqLength,
         currTimestep = None,
-        modelFilepath = None
+        modelFilepath = None,
+        verbose = 1
     ):
         """Train Model on Dataset
 
@@ -85,7 +84,8 @@ class Model:
         has value greater than or equall to windowSize, else we begin
         from windowSize
         modelFilepath: Save model parameters to this path after every
-        sequence if not None, else don't save 
+        sequence if not None, else don't save
+        verbose: 0 - no info, 1 - some info, > 1 - more info
 
         Train the model using the provided data and information
         """
@@ -94,7 +94,8 @@ class Model:
             Y, 
             seqLength,
             currTimestep,
-            modelFilepath
+            modelFilepath,
+            verbose
         )
 
     def predict(self, X):

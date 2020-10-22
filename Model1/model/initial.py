@@ -46,20 +46,21 @@ def initializeModel(
     self.gru = tf.keras.layers.GRUCell(
         units = self.hiddenStateSize,
         activation = None,
-        recurrent_activation = 'sigmoid',
-        input_shape = (self.inputDimension,)
+        recurrent_activation = 'sigmoid'
     )
+    self.gru.build(input_shape = (self.inputDimension,))
 
     self.out = tf.keras.layers.Dense(
         units = 1,
-        activation = None,
-        input_shape = (self.hiddenStateSize,)
+        activation = None
     )
+    self.out.build(input_shape = (self.hiddenStateSize,))
 
     self.memOut = tf.keras.layers.Dense(
         units = 1,
         activation = 'sigmoid',
         input_shape = (self.hiddenStateSize,)
     )
+    self.memOut.build(input_shape = (self.hiddenStateSize,))
 
     self.b = tf.Variable(0.0)

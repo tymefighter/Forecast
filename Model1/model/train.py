@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import time
 
 from model.loss import loss1, loss2
 
@@ -119,7 +120,7 @@ def trainOneTimestep(
         with tf.GradientTape() as innerGradientTape:
 
             self.buildMemory(X, Y, currentTime)
-            pred = self.memOut(self.S)
+            pred = tf.squeeze(self.memOut(self.S))
             loss = loss2(
                 pred, 
                 self.q,
@@ -138,7 +139,7 @@ def trainOneTimestep(
         ))
 
     nextState, _ = self.gru(np.expand_dims(X[currentTime], 0), gruState)
-    semiPred = self.out(np.expand_dims(nextState, 0))
+    semiPred = tf.squeeze(self.out(np.expand_dims(nextState, 0)))
 
     attentionWeights = self.computeAttentionWeights(tf.squeeze(nextState))
     extremePred = tf.math.reduce_sum(
@@ -167,6 +168,8 @@ def trainOneSeq(
     Current sequence is given by X[seqStartTime : seqEndTime + 1]
     and Y[seqStartTime : seqEndTime + 1]. This function trains the
     model parameters on this sequence
+
+    Returns sequence loss value
     """
     with tf.GradientTape() as tape:
         numNormalEvents = numExtremeEvents = 0
@@ -225,13 +228,16 @@ def trainOneSeq(
         trainableVars
     ))
 
+    return loss
+
 def trainModel(
     self, 
     X, 
     Y,
     seqLength,
     currTimestep,
-    modelFilepath
+    modelFilepath,
+    verbose
 ):
     """Train Model on Dataset
 
@@ -244,7 +250,8 @@ def trainModel(
     has value greater than or equall to windowSize, else we begin
     from windowSize + 1
     modelFilepath: Save model parameters to this path after every
-    sequence if not None, else don't save 
+    sequence if not None, else don't save
+    verbose: 0 - no info, 1 - some info, > 1 - more info
 
     Train the model using the provided data and information
     """
@@ -259,11 +266,24 @@ def trainModel(
     while seqStartTime < n:
         seqEndTime = min(
             n - 1, 
-            seqStartTime + self.windowSize - 1
+            seqStartTime + seqLength - 1
         )
+        
+        startTime = time.time()
 
-        self.trainOneSeq(X, Y, seqStartTime, seqEndTime)
-        seqStartTime += self.windowSize
+        loss = self.trainOneSeq(X, Y, seqStartTime, seqEndTime)
+
+        endTime = time.time()
+        timeTaken = endTime - startTime
+        if verbose > 0:
+            print(
+                f'start timestep: {seqStartTime}' \
+                + f' | end timestep: {seqEndTime} ' \
+                + f' | time taken: {timeTaken : .2f} sec' \
+                + f' | Loss: {loss}'
+            )
+
+        seqStartTime += seqLength
 
         if modelFilepath is not None:
             self.saveModel(modelFilepath)
