@@ -288,4 +288,4 @@ def trainModel(
         if modelFilepath is not None:
             self.saveModel(modelFilepath)
 
-    self.buildMemory(X, Y, n + 1)
+    self.buildMemory(X, Y, n)
