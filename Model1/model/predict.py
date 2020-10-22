@@ -45,7 +45,8 @@ def predictOneTimestep(
     this is a scalar
     - The next state of the GRU, this has a shape (1, H)
     """
-    nextState, _ = self.gru(np.expand_dims(X[i], 0), gruState)
+    nextState, _ = self.gru(np.expand_dims(X[currTime], 0), gruState)
+    semiPred = tf.squeeze(self.out(np.expand_dims(nextState, 0)))
 
     attentionWeights = \
         self.computeAttentionWeights(tf.squeeze(nextState))

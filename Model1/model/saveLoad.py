@@ -1,3 +1,5 @@
+import tensorflow as tf
+import numpy as np
 import pickle
 
 def saveModel(self, modelFilepath):
@@ -53,7 +55,28 @@ def loadModel(self, modelFilepath):
     self.extremeLossWeight = saveDict['extremeLossWeight']
     self.S = saveDict['S']
     self.q = saveDict['q']
+
+    self.gru = tf.keras.layers.GRUCell(
+        units = self.hiddenStateSize,
+        activation = None,
+        recurrent_activation = 'sigmoid'
+    )
+    self.gru.build(input_shape = (self.inputDimension,))
     self.gru.set_weights(saveDict['gru'])
+
+    self.out = tf.keras.layers.Dense(
+        units = 1,
+        activation = None
+    )
+    self.out.build(input_shape = (self.hiddenStateSize,))
     self.out.set_weights(saveDict['out'])
+
+    self.memOut = tf.keras.layers.Dense(
+        units = 1,
+        activation = 'sigmoid',
+        input_shape = (self.hiddenStateSize,)
+    )
+    self.memOut.build(input_shape = (self.hiddenStateSize,))
     self.memOut.set_weights(saveDict['memOut'])
-    self.b.assign(saveDict['b'])
+
+    self.b = tf.Variable(saveDict['b'])
