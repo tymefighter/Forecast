@@ -6,3 +6,4 @@ __pycache__/*
 model/.DS_Store
 model/__pycache__/
 model/__pycache__/*
+*.model
