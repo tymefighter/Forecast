@@ -53,6 +53,9 @@ def buildMemory(
     the memory within the object as self.S and self.q, and does
     not return anything.
 
+    self.S has dim (self.memorySize, self.hiddenStateSize)
+    self.q has dim (self.memorySize,)
+
     It throws an Exception if it cannot construct memory
     """
     if currentTime < self.windowSize + 1:
@@ -77,7 +80,7 @@ def buildMemory(
             self.q[i] = 0.0
 
     self.S = tf.stack(self.S)
-    self.q = tf.stack(self.q)
+    self.q = tf.convert_to_tensor(self.q, dtype = tf.float32)
 
 def trainOneTimestep(
     self,
@@ -203,9 +206,12 @@ def trainOneSeq(
             extremePredSeq.append(extremePred)
             extremeTargetSeq.append(extremeTarget)
 
-        yPredSeq = tf.stack(yPredSeq)
-        extremePredSeq = tf.stack(extremePredSeq)
-        extremeTargetSeq = tf.stack(extremeTargetSeq)
+        yPredSeq = \
+            tf.convert_to_tensor(yPredSeq, dtype = tf.float32)
+        extremePredSeq = \
+            tf.convert_to_tensor(extremePredSeq, dtype = tf.float32)
+        extremeTargetSeq = \
+            tf.convert_to_tensor(extremeTargetSeq, dtype = tf.float32)
 
         loss = loss1(
             yPredSeq,
@@ -271,7 +277,8 @@ def trainModel(
         
         startTime = time.time()
 
-        loss = self.trainOneSeq(X, Y, seqStartTime, seqEndTime)
+        loss, squareLoss, extremeLoss = \
+            self.trainOneSeq(X, Y, seqStartTime, seqEndTime)
 
         endTime = time.time()
         timeTaken = endTime - startTime
@@ -280,7 +287,9 @@ def trainModel(
                 f'start timestep: {seqStartTime}' \
                 + f' | end timestep: {seqEndTime} ' \
                 + f' | time taken: {timeTaken : .2f} sec' \
-                + f' | Loss: {loss}'
+                + f' | Total Loss: {loss}'
+                + f' | Square Loss: {squareLoss}'
+                + f' | Extreme Loss (wt): {extremeLoss}'
             )
 
         seqStartTime += seqLength
