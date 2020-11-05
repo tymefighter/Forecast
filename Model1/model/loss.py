@@ -11,7 +11,7 @@ def squareLoss(yPred, yTrue):
     Returns the square loss between predicted
     and target values, is is a scalar
     """
-    return tf.math.reduce_sum(tf.math.square(yPred - yTrue))
+    return tf.math.reduce_mean(tf.math.square(yPred - yTrue))
 
 def extremeValueLoss(
     pred, 
@@ -36,8 +36,8 @@ def extremeValueLoss(
     """
 
     totalEvents = numNormalEvents + numExtremeEvents
-    fractionNormal = numNormalEvents / totalEvents
-    fractionExtreme = numExtremeEvents / totalEvents
+    fractionNormal = numNormalEvents / float(totalEvents)
+    fractionExtreme = numExtremeEvents / float(totalEvents)
 
     extremePart = - fractionNormal \
         * tf.math.pow(
@@ -85,14 +85,18 @@ def loss1(
     Returns the Loss value for the given input, the returned value is
     a scalar
     """
-    return squareLoss(yPred, yTrue) + \
-            extremeWeight * extremeValueLoss(
-                extremePred, 
-                extremeTarget,
-                numNormalEvents,
-                numExtremeEvents,
-                extremeValueIndex
-            )
+
+    sqLoss = squareLoss(yPred, yTrue)
+    extLoss = extremeWeight * extremeValueLoss(
+        extremePred, 
+        extremeTarget,
+        numNormalEvents,
+        numExtremeEvents,
+        extremeValueIndex
+    )
+    totalLoss = sqLoss + extLoss
+
+    return totalLoss, sqLoss, extLoss
 
 """Loss Function for Enchancing Memory
 
