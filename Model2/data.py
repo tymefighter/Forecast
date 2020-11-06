@@ -4,6 +4,7 @@ class Data:
         dataPath = None,
         n = 1000,
         inputDimension = 1,
+        horizon = 1,
         extremeValues = False,
         longTerm = False
     ):
@@ -23,13 +24,16 @@ class Data:
 
         obsCoef, noiseCoef = generateCoeff(P, Q)
 
-        return generateArma(
-            n,
+        X = generateArma(
+            n + h,
             obsCoef,
             noiseCoef,
             noiseGenFunc,
             noiseGenParams
         )
+        y = X[h :, 0]
+
+        return X[ : n], y
         
     def generateCoeff(P, Q):
         obsCoef = np.concatenate([
