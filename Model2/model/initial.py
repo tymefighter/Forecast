@@ -34,6 +34,7 @@ def initializeModel(
     self.b = tf.Variable(0)
 
 def getLstmStates(self):
+    
     return self.lstm.get_initial_state(
         batch_size = 1,
         dtype = tf.float32
