@@ -1,4 +1,4 @@
-class Log:
+class Logger:
 
     def __init__(self, verboseLevel = 1):
         pass

@@ -1,7 +1,7 @@
-from ts.log.log import Log
+from ts.log.logger import Logger
 
 
-class FileLog(Log):
+class FileLogger(Logger):
 
     def __init__(self, filepath, logLevel = 1):
         self.file = open(filepath, 'w')

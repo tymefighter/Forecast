@@ -1,7 +1,7 @@
-from ts.log.log import Log
+from ts.log.logger import Logger
 
 
-class ConsoleLog(Log):
+class ConsoleLogger(Logger):
 
     def __init__(self, logLevel = 1):
         self.verboseLevel = logLevel
