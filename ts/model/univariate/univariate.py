@@ -6,7 +6,8 @@ class UnivariateModel:
             targetSeries,
             forecastHorizon,
             sequenceLength,
-            modelSavePath=None
+            modelSavePath=None,
+            verbose=1
     ):
         pass
 
@@ -17,8 +18,14 @@ class UnivariateModel:
     ):
         pass
 
-    def save(self):
+    def save(
+            self,
+            modelSavePath
+    ):
         pass
 
-    def load(self):
+    def load(
+            self,
+            modelLoadPath
+    ):
         pass
