@@ -1,7 +1,40 @@
+from ts.model.univariate.univariate import UnivariateModel
 from ts.log.logger import DEFAULT_LOG_PATH
 
 
-class UnivariateModel:
+class ExtremeTime(UnivariateModel):
+
+    def __init__(
+            self,
+            forecastHorizon=1,
+            memorySize=80,
+            windowSize=60,
+            encoderStateSize=10,
+            lstmStateSize=10,
+            numExoVariables=0,
+            modelLoadPath=None,
+            logPath=DEFAULT_LOG_PATH,
+            logLevel=1
+    ):
+        """
+        Initialize the model parameters and hyperparameters
+
+        :param forecastHorizon: How much further in the future the model has to
+        predict the target series variable
+        :param memorySize: Size of the explicit memory unit used by the model, it
+        should be a scalar value
+        :param windowSize: Size of each window which is to be compressed and stored
+        as a memory cell
+        :param encoderStateSize: Size of the hidden state of the GRU encoder
+        :param lstmStateSize: Size of the hidden state of the LSTM used in the model
+        :param numExoVariables: Number of exogenous variables to be used for training
+        :param modelLoadPath: If specified, then all provided parameters (except logging)
+        are ignored, and the model is loaded from the path
+        :param logPath: Path where to log the information
+        :param logLevel: Logging level, 0 means no logging, greater values indicate
+        more information
+        """
+        pass
 
     def train(
             self,
@@ -29,7 +62,7 @@ class UnivariateModel:
         the information printed to the console
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more informations
+        more information
         :return: None
         """
         pass

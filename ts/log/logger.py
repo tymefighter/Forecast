@@ -1,3 +1,6 @@
+DEFAULT_LOG_PATH = '~/forecast.log'
+
+
 class Logger:
 
     def setLevel(self, verboseLevel):
