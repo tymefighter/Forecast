@@ -34,7 +34,11 @@ class ExtremeTime(UnivariateModel):
         :param logLevel: Logging level, 0 means no logging, greater values indicate
         more information
         """
-        pass
+
+        if modelLoadPath is not None:
+            self.load(modelLoadPath, logPath, logLevel)
+        else:
+            pass
 
     def train(
             self,
