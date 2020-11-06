@@ -3,7 +3,7 @@ from ts.log.logger import Logger
 
 class FileLogger(Logger):
 
-    def __init__(self, filepath, logLevel = 1):
+    def __init__(self, filepath, logLevel=1):
         self.file = open(filepath, 'w')
         self.logLevel = logLevel
 

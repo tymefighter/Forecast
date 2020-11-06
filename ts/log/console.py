@@ -3,7 +3,7 @@ from ts.log.logger import Logger
 
 class ConsoleLogger(Logger):
 
-    def __init__(self, logLevel = 1):
+    def __init__(self, logLevel=1):
         self.logLevel = logLevel
 
     def setLevel(self, logLevel):
