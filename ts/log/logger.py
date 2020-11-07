@@ -6,7 +6,7 @@ class Logger:
     def setLevel(self, verboseLevel):
         pass
 
-    def write(self, message, level):
+    def write(self, message, level, functionName=None):
         pass
 
     def close(self):
