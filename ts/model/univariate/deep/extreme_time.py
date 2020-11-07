@@ -1,5 +1,8 @@
+import pickle
+import tensorflow as tf
+
 from ts.model.univariate.univariate import UnivariateModel
-from ts.log.logger import DEFAULT_LOG_PATH
+from ts.log import DEFAULT_LOG_PATH, FileLogger
 
 
 class ExtremeTime(UnivariateModel):
@@ -38,7 +41,34 @@ class ExtremeTime(UnivariateModel):
         if modelLoadPath is not None:
             self.load(modelLoadPath, logPath, logLevel)
         else:
-            pass
+            logger = FileLogger(logPath, logLevel)
+            logger.write('Initializing Members', 2, self.__init__.__name__)
+
+            self.forecastHorizon = forecastHorizon
+            self.memorySize = memorySize
+            self.windowSize = windowSize
+            self.encoderStateSize = encoderStateSize
+            self.lstmStateSize = lstmStateSize
+            self.inputDimension = numExoVariables + 1
+            self.memory = None
+            self.q = None
+
+            logger.write('Building Model Parameters', 2, self.__init__.__name__)
+
+            self.gruEncoder = tf.keras.layers.GRUCell(self.encoderStateSize)
+            self.gruEncoder.build(input_shape=(self.inputDimension,))
+
+            self.lstm = tf.keras.layers.LSTMCell(self.lstmStateSize)
+            self.lstm.build(input_shape=(self.inputDimension,))
+
+            self.W = tf.Variable(tf.random.normal((1, self.lstmStateSize)))
+            self.A = tf.Variable(
+                tf.random.normal((self.encoderStateSize, self.lstmStateSize))
+            )
+
+            self.b = tf.Variable(0)
+
+            logger.close()
 
     def train(
             self,
@@ -137,7 +167,37 @@ class ExtremeTime(UnivariateModel):
         more information
         :return: None
         """
-        pass
+
+        logger = FileLogger(logPath, logLevel)
+
+        if self.memory is None:
+            logger.write('Memory not constructed - cannot save model', 1, self.save.__name__)
+            raise Exception('Memory not constructed - cannot save model')
+
+        logger.write('Constructing Dictionary from model params', 2, self.save.__name__)
+
+        saveDict = {
+            'memorySize': self.memorySize,
+            'windowSize': self.windowSize,
+            'inputDimension': self.inputDimension,
+            'encoderStateSize': self.encoderStateSize,
+            'lstmStateSize': self.lstmStateSize,
+            'memory': self.memory,
+            'q': self.q,
+            'gruEncoder': self.gruEncoder.get_weights(),
+            'lstm': self.lstm.get_weights(),
+            'W': self.W.read_value(),
+            'A': self.A.read_value(),
+            'b': self.b.read_value()
+        }
+
+        logger.write('Saving Dictionary', 2, self.save.__name__)
+
+        fl = open(modelSavePath, 'wb')
+        pickle.dump(saveDict, fl)
+        fl.close()
+
+        logger.close()
 
     def load(
             self,
@@ -154,4 +214,52 @@ class ExtremeTime(UnivariateModel):
         more information
         :return: None
         """
+
+        logger = FileLogger(logPath, logLevel)
+        logger.write('Load Dictionary from Model Params file', 2, self.load.__name__)
+
+        fl = open(modelLoadPath, 'rb')
+        saveDict = pickle.load(fl)
+        fl.close()
+
+        logger.write('Loading Params', 2, self.load.__name__)
+
+        self.memorySize = saveDict['memorySize']
+        self.windowSize = saveDict['windowSize']
+        self.inputDimension = saveDict['inputDimension']
+        self.encoderStateSize = saveDict['encoderStateSize']
+        self.lstmStateSize = saveDict['lstmStateSize']
+        self.memory = saveDict['memory']
+        self.q = saveDict['q']
+
+        self.gruEncoder = tf.keras.layers.GRUCell(units=self.encoderStateSize)
+        self.gruEncoder.build(input_shape=(self.inputDimension,))
+        self.gruEncoder.set_weights(saveDict['gruEncoder'])
+
+        self.lstm = tf.keras.layers.LSTMCell(units=self.encoderStateSize)
+        self.lstm.build(input_shape=(self.inputDimension,))
+        self.lstm.set_weights(saveDict['lstm'])
+
+        self.W = tf.Variable(saveDict['W'])
+        self.A = tf.Variable(saveDict['A'])
+        self.b = tf.Variable(saveDict['b'])
+
+    def trainSequence(self, X, Y, seqStartTime, seqEndTime, logger):
         pass
+
+    def buildMemory(self, X, Y, currentTime):
+        pass
+
+    def runGruOnWindow(self, X, windowStartTime):
+        pass
+
+    def predictSequence(self, X):
+        pass
+
+    def predictTimestep(self, lstmStateList, X, currentTime):
+        pass
+
+    def computeAttention(self, embedding):
+        pass
+
+
