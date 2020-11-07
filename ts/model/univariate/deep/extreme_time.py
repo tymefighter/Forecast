@@ -45,7 +45,7 @@ class ExtremeTime(UnivariateModel):
             self.load(modelLoadPath, logPath, logLevel)
         else:
             logger = FileLogger(logPath, logLevel)
-            logger.write('Initializing Members', 2, self.__init__.__name__)
+            logger.write('Initializing Members', 1, self.__init__.__name__)
 
             self.forecastHorizon = forecastHorizon
             self.memorySize = memorySize
@@ -56,7 +56,7 @@ class ExtremeTime(UnivariateModel):
             self.memory = None
             self.q = None
 
-            logger.write('Building Model Parameters', 2, self.__init__.__name__)
+            logger.write('Building Model Parameters', 1, self.__init__.__name__)
 
             self.gruEncoder = tf.keras.layers.GRUCell(self.encoderStateSize)
             self.gruEncoder.build(input_shape=(self.inputDimension,))
@@ -78,6 +78,7 @@ class ExtremeTime(UnivariateModel):
             targetSeries,
             sequenceLength,
             exogenousSeries=None,
+            optimizer=tf.optimizers.Adam,
             modelSavePath=None,
             verboseLevel=1,
             logPath=DEFAULT_LOG_PATH,
@@ -93,6 +94,7 @@ class ExtremeTime(UnivariateModel):
         numpy array of shape (n, self.numExoVariables), it can be None only if
         self.numExoVariables is 0 in which case the exogenous variables are not
         considered
+        :param optimizer: Optimizer of training the parameters
         :param modelSavePath: Path where to save the model parameters after
         each training an a sequence, if None then parameters are not saved
         :param verboseLevel: Verbose level, 0 is nothing, greater values increases
@@ -108,29 +110,32 @@ class ExtremeTime(UnivariateModel):
 
         X, Y = self.prepareData(targetSeries, exogenousSeries, logger)
 
-        sequenceStartTime = self.windowSize
+        seqStartTime = self.windowSize
         n = X.shape[0]
         logger.write(
-            f'Seq Start Time: {sequenceStartTime}, Train len: {n}', 3, self.train.__name__
+            f'Seq Start Time: {seqStartTime}, Train len: {n}', 2, self.train.__name__
         )
-        assert (sequenceStartTime < n)
+        assert (seqStartTime < n)
 
-        logger.write('Begin Training', 2, self.train.__name__)
-        while sequenceStartTime < n:
-            sequenceEndTime = min(sequenceStartTime + sequenceLength, n - 1)
+        logger.write('Begin Training', 1, self.train.__name__)
+        while seqStartTime < n:
+            seqEndTime = min(seqStartTime + sequenceLength, n - 1)
 
             startTime = time.time()
-            loss = self.trainSequence(X, Y, sequenceStartTime, sequenceEndTime, logger)
+            loss = self.trainSequence(X, Y, seqStartTime, seqEndTime, optimizer, logger)
             endTime = time.time()
             timeTaken = endTime - startTime
 
             verbose.write(
-                f'start timestep: {sequenceStartTime}'
-                + f' | end timestep: {sequenceEndTime}'
+                f'start timestep: {seqStartTime}'
+                + f' | end timestep: {seqEndTime}'
                 + f' | time taken: {timeTaken : .2f} sec'
                 + f' | Loss: {loss}',
                 1
             )
+
+            if modelSavePath is not None:
+                logger.write(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
 
         logger.close()
 
@@ -203,11 +208,10 @@ class ExtremeTime(UnivariateModel):
 
         logger = FileLogger(logPath, logLevel)
 
-        if self.memory is None:
-            logger.write('Memory not constructed - cannot save model', 1, self.save.__name__)
-            raise Exception('Memory not constructed - cannot save model')
+        assert(self.memory is not None)
+        logger.write(f'Memory Shape: {self.memory.shape}', 2, self.save.__name__)
 
-        logger.write('Constructing Dictionary from model params', 2, self.save.__name__)
+        logger.write('Constructing Dictionary from model params', 1, self.save.__name__)
 
         saveDict = {
             'memorySize': self.memorySize,
@@ -224,7 +228,7 @@ class ExtremeTime(UnivariateModel):
             'b': self.b.read_value()
         }
 
-        logger.write('Saving Dictionary', 2, self.save.__name__)
+        logger.write('Saving Dictionary', 1, self.save.__name__)
 
         fl = open(modelSavePath, 'wb')
         pickle.dump(saveDict, fl)
@@ -249,13 +253,13 @@ class ExtremeTime(UnivariateModel):
         """
 
         logger = FileLogger(logPath, logLevel)
-        logger.write('Load Dictionary from Model Params file', 2, self.load.__name__)
+        logger.write('Load Dictionary from Model Params file', 1, self.load.__name__)
 
         fl = open(modelLoadPath, 'rb')
         saveDict = pickle.load(fl)
         fl.close()
 
-        logger.write('Loading Params', 2, self.load.__name__)
+        logger.write('Loading Params', 1, self.load.__name__)
 
         self.memorySize = saveDict['memorySize']
         self.windowSize = saveDict['windowSize']
@@ -278,21 +282,21 @@ class ExtremeTime(UnivariateModel):
         self.b = tf.Variable(saveDict['b'])
 
     def prepareData(self, targetSeries, exogenousSeries, logger):
-        logger.write('Begin preparing data', 2, self.prepareData.__name__)
+        logger.write('Begin preparing data', 1, self.prepareData.__name__)
 
-        logger.write(f'Target Series Shape: {targetSeries.shape}', 3, self.prepareData.__name__)
+        logger.write(f'Target Series Shape: {targetSeries.shape}', 2, self.prepareData.__name__)
         assert (len(targetSeries.shape) == 1)
 
         trainLength = targetSeries.shape[0] - self.forecastHorizon
-        logger.write(f'Train Length: {trainLength}', 3, self.prepareData.__name__)
+        logger.write(f'Train Length: {trainLength}', 2, self.prepareData.__name__)
         assert (trainLength > 0)
 
-        logger.write(f'Exogenous Series: {exogenousSeries}', 3, self.prepareData.__name__)
+        logger.write(f'Exogenous Series: {exogenousSeries}', 2, self.prepareData.__name__)
         if self.inputDimension > 1:
             assert (exogenousSeries is not None)
 
             logger.write(
-                f'Exogenous Series Shape: {exogenousSeries.shape}', 3, self.prepareData.__name__
+                f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.prepareData.__name__
             )
             assert (self.forecastHorizon + exogenousSeries.shape[0] == targetSeries.shape[0])
             assert (exogenousSeries.shape[1] == self.inputDimension - 1)
@@ -307,25 +311,133 @@ class ExtremeTime(UnivariateModel):
 
         Y = targetSeries[self.forecastHorizon:]
 
-        logger.write(f'X shape: {X.shape}, Y shape: {Y.shape}', 3, self.prepareData.__name__)
+        logger.write(f'X shape: {X.shape}, Y shape: {Y.shape}', 2, self.prepareData.__name__)
         assert (X.shape[0] == Y.shape[0])
 
         return X, Y
 
-    def trainSequence(self, X, Y, seqStartTime, seqEndTime, logger):
-        pass
+    def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer, logger):
+        logger.write('Begin Training on Sequence', 1, self.trainSequence.__name__)
+        logger.write(
+            f'Sequence start: {seqStartTime}, Sequence end: {seqEndTime}',
+            2,
+            self.trainSequence.__name__
+        )
 
-    def buildMemory(self, X, Y, currentTime):
-        pass
+        with tf.GradientTape() as tape:
+            self.buildMemory(X, Y, seqStartTime, logger)
+            lstmStateList = self.getLstmStates()
+
+            Ypred = []
+            for t in range(seqStartTime, seqEndTime + 1):
+                pred, lstmStateList = self.predictTimestep(lstmStateList, X, t)
+                Ypred.append(pred)
+
+            Ypred = tf.convert_to_tensor(Ypred, dtype=tf.float32)
+
+        loss = tf.keras.losses.MSE(
+            Ypred,
+            Y[seqStartTime: seqEndTime + 1]
+        )
+
+        trainableVars = self.gruEncoder.trainable_variables \
+            + self.lstm.trainable_variables \
+            + [self.W, self.A, self.b]
+
+        grads = tape.gradient(loss, trainableVars)
+        optimizer.apply_gradients(zip(
+            grads,
+            trainableVars
+        ))
+
+        return loss
+
+    def buildMemory(self, X, Y, currentTime, logger):
+        if currentTime < self.windowSize:
+            raise Exception('Cannot Construct Memory')
+
+        sampleLow = 0
+        sampleHigh = currentTime - self.windowSize
+
+        self.memory = [None] * self.memorySize
+        self.q = [None] * self.memorySize
+
+        for i in range(self.memorySize):
+            windowStartTime = np.random.randint(
+                sampleLow,
+                sampleHigh + 1
+            )
+
+            self.memory[i] = self.runGruOnWindow(X, windowStartTime)
+            self.q[i] = Y[windowStartTime + self.windowSize - 1]
+
+        self.memory = tf.stack(self.memory)
+        self.q = tf.convert_to_tensor(self.q, dtype=tf.float32)
 
     def runGruOnWindow(self, X, windowStartTime):
-        pass
+        gruState = self.getGruEncoderState()
+
+        for t in range(
+                windowStartTime,
+                windowStartTime + self.windowSize
+        ):
+            gruState, _ = self.gruEncoder(
+                np.expand_dims(X[t], 0),
+                gruState
+            )
+
+        return tf.squeeze(gruState)
 
     def predictSequence(self, X):
-        pass
+        n = X.shape[0]
+        stateList = self.getLstmStates()
+        yPred = [None] * n
+
+        for i in range(n):
+            yPred[i], stateList = \
+                self.predictTimestep(stateList, X, i)
+
+        yPred = np.array(yPred)
+        return yPred
 
     def predictTimestep(self, lstmStateList, X, currentTime):
-        pass
+        [lstmHiddenState, lstmCellState] = self.lstm(
+            X[currentTime],
+            lstmStateList
+        )
+
+        embedding = tf.matmul(
+            self.A,
+            tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
+        )
+        attentionWeights = self.computeAttention(embedding)
+
+        o1 = tf.squeeze(tf.matmul(
+            self.W,
+            tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
+        ))
+
+        o2 = tf.reduce_sum(attentionWeights * self.q)
+
+        bSigmoid = tf.nn.sigmoid(self.b)
+        return bSigmoid * o1 + (1 - bSigmoid) * o2, [lstmHiddenState, lstmCellState]
 
     def computeAttention(self, embedding):
-        pass
+        return tf.squeeze(tf.nn.softmax(tf.linalg.matmul(
+            self.memory,
+            tf.expand_dims(embedding, axis=1)
+        ), axis=0))
+
+    def getLstmStates(self):
+
+        return self.lstm.get_initial_state(
+            batch_size=1,
+            dtype=tf.float32
+        )
+
+    def getGruEncoderState(self):
+
+        return self.gruEncoder.get_initial_state(
+            batch_size=1,
+            dtype=tf.float32
+        )
