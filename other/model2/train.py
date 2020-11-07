@@ -7,7 +7,7 @@ def runGruOnWindow(
     X: (n, d)
     return gruState: (encoderStateSize,)
     """
-    gruState = self.getGruEncoderState()
+    gruState = self.getInitialGruEncoderState()
 
     for t in range(
         windowStartTime, 
@@ -66,7 +66,7 @@ def trainSequence(
     with tf.GradientTape() as tape:
         self.buildMemory(self, X, seqStartTime)
 
-        lstmStateList = self.getLstmStates()
+        lstmStateList = self.getInitialLstmStates()
 
         yPredSeq = []
         for t in range(seqStartTime, seqEndTime + 1):

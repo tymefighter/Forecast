@@ -91,8 +91,8 @@ class ExtremeTime(UnivariateModel):
         should be a numpy array of shape (n + self.forecastHorizon,)
         :param sequenceLength: Length of each training sequence
         :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (n, self.numExoVariables), it can be None only if
-        self.numExoVariables is 0 in which case the exogenous variables are not
+        numpy array of shape (n, numExoVariables), it can be None only if
+        numExoVariables is 0 in which case the exogenous variables are not
         considered
         :param optimizer: Optimizer of training the parameters
         :param modelSavePath: Path where to save the model parameters after
@@ -137,6 +137,7 @@ class ExtremeTime(UnivariateModel):
             if modelSavePath is not None:
                 logger.write(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
 
+        self.buildMemory(X, Y, n, logger)
         logger.close()
 
     def predict(
@@ -150,10 +151,10 @@ class ExtremeTime(UnivariateModel):
         Forecast using the model parameters on the provided input data
 
         :param targetSeries: Univariate Series of the Target Variable, it
-        should be a numpy array of shape (n,)
+        should be a numpy array of shape (n + self.forecastHorizon,)
         :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (n, self.numExoVariables), it can be None only if
-        self.numExoVariables is 0 in which case the exogenous variables are not
+        numpy array of shape (n, numExoVariables), it can be None only if
+        numExoVariables is 0 in which case the exogenous variables are not
         considered
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate
@@ -161,7 +162,30 @@ class ExtremeTime(UnivariateModel):
         :return: Forecast targets predicted by the model, it has shape (n,), the
         horizon of the targets is the same as self.forecastHorizon
         """
-        pass
+
+        logger = FileLogger(logPath, logLevel)
+        logger.write('Begin Prediction', 1, self.trainSequence.__name__)
+
+        X = self.preparePredictData(targetSeries, exogenousSeries, logger)
+
+        n = X.shape[0]
+        lstmStateList = self.getInitialLstmStates()
+        Ypred = [None] * n
+
+        logger.write(
+            f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}',
+            2,
+            self.trainSequence.__name__
+        )
+
+        for i in range(n):
+            Ypred[i], lstmStateList = \
+                self.predictTimestep(lstmStateList, X, i)
+
+        Ypred = np.array(Ypred)
+        logger.write(f'Output Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
+
+        return Ypred
 
     def evaluate(
             self,
@@ -180,8 +204,8 @@ class ExtremeTime(UnivariateModel):
         the values ahead are for evaluating the predicted results with respect
         to them (i.e. they are true targets for our prediction)
         :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (numTimesteps, self.numExoVariables), it can be None
-        only if self.numExoVariables is 0 in which case the exogenous variables
+        numpy array of shape (numTimesteps, numExoVariables), it can be None
+        only if numExoVariables is 0 in which case the exogenous variables
         are not considered
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate
@@ -281,7 +305,67 @@ class ExtremeTime(UnivariateModel):
         self.A = tf.Variable(saveDict['A'])
         self.b = tf.Variable(saveDict['b'])
 
+    def preparePredictData(self, targetSeries, exogenousSeries, logger):
+        """
+        Prepare the data for training
+
+        :param targetSeries: Univariate Series of the Target Variable, it
+        should be a numpy array of shape (n,)
+        :param exogenousSeries: Series of exogenous Variables, it should be a
+        numpy array of shape (n, numExoVariables), it can be None only if
+        numExoVariables is 0 in which case the exogenous variables are not
+        considered
+        :param logger: The logger which would be used to log information
+        :return: prepared feature data X, X has shape (n, numExoVariables + 1), X can
+        also be said to have shape (n, self.inputShape) since
+        self.inputShape = numExoVariables + 1s
+        """
+
+        logger.write('Begin preparing data', 1, self.preparePredictData.__name__)
+        logger.write(f'Target Series Shape: {targetSeries.shape}', 2, self.preparePredictData.__name__)
+        assert (len(targetSeries.shape) == 1)
+
+        trainLength = targetSeries.shape[0] - self.forecastHorizon
+
+        logger.write(f'Train Length: {trainLength}', 2, self.preparePredictData.__name__)
+        assert (trainLength > 0)
+
+        logger.write(f'Exogenous Series: {exogenousSeries}', 2, self.preparePredictData.__name__)
+        if self.inputDimension > 1:
+            assert (exogenousSeries is not None)
+
+            logger.write(
+                f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.preparePredictData.__name__
+            )
+            assert (exogenousSeries.shape[0] == targetSeries.shape[0])
+            assert (exogenousSeries.shape[1] == self.inputDimension - 1)
+
+            X = np.concatenate(
+                [exogenousSeries, np.expand_dims(targetSeries[:trainLength], axis=1)],
+                axis=1
+            )
+        else:
+            assert (exogenousSeries is None)
+            X = np.expand_dims(targetSeries[:trainLength], axis=1)
+
+        return X
+
     def prepareData(self, targetSeries, exogenousSeries, logger):
+        """
+        Prepare the data for training
+
+        :param targetSeries: Univariate Series of the Target Variable, it
+        should be a numpy array of shape (n + self.forecastHorizon,)
+        :param exogenousSeries: Series of exogenous Variables, it should be a
+        numpy array of shape (n, numExoVariables), it can be None only if
+        numExoVariables is 0 in which case the exogenous variables are not
+        considered
+        :param logger: The logger which would be used to log information
+        :return: prepared data X, Y as features and targets, X has shape
+        (n, numExoVariables + 1), Y has shape (n,). X can also be said to have
+        shape (n, self.inputShape) since self.inputShape = numExoVariables + 1s
+        """
+
         logger.write('Begin preparing data', 1, self.prepareData.__name__)
         logger.write(f'Target Series Shape: {targetSeries.shape}', 2, self.prepareData.__name__)
         assert (len(targetSeries.shape) == 1)
@@ -317,6 +401,17 @@ class ExtremeTime(UnivariateModel):
         return X, Y
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer, logger):
+        """
+
+        :param X: Features, has shape (n, self.inputShape)
+        :param Y: Targets, has shape (n,)
+        :param seqStartTime: Sequence Start Time
+        :param seqEndTime: Sequence End Time
+        :param optimizer: The optimization algorithm
+        :param logger: The logger which would be used to log information
+        :return: The loss value resulted from training on the sequence
+        """
+
         logger.write('Begin Training on Sequence', 1, self.trainSequence.__name__)
         logger.write(
             f'Sequence start: {seqStartTime}, Sequence end: {seqEndTime}',
@@ -326,7 +421,7 @@ class ExtremeTime(UnivariateModel):
 
         with tf.GradientTape() as tape:
             self.buildMemory(X, Y, seqStartTime, logger)
-            lstmStateList = self.getLstmStates()
+            lstmStateList = self.getInitialLstmStates()
 
             logger.write(
                 f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}',
@@ -365,6 +460,18 @@ class ExtremeTime(UnivariateModel):
         return loss
 
     def buildMemory(self, X, Y, currentTime, logger):
+        """
+        Build Model Memory using the timesteps seen up till now
+
+        :param X: Features, has shape (n, self.inputShape)
+        :param Y: Targets, has shape (n,)
+        :param currentTime: current timestep, memory would be built only using the
+        timestep earlier than the current timestep
+        :param logger: The logger which would be used to log information
+        :return: None
+        """
+
+        logger.write(f'Building Memory', 1, self.buildMemory.__name__)
         logger.write(f'Current Time: {currentTime}', 2, self.buildMemory.__name__)
         assert(currentTime >= self.windowSize)
 
@@ -393,11 +500,18 @@ class ExtremeTime(UnivariateModel):
         )
 
     def runGruOnWindow(self, X, windowStartTime, logger):
+        """
+        Runs GRU on the window and returns the final state
+
+        :param X: Features, has shape (n, self.inputShape)
+        :param windowStartTime: Starting timestep of the window
+        :param logger: The logger which would be used to log information
+        :return: The final state after running on the window, it has shape (self.encoderStateSize,)
+        """
 
         logger.write(f'Window Start Time: {windowStartTime}', 2, self.runGruOnWindow.__name__)
 
-        gruState = self.getGruEncoderState()
-        logger.write(f'GRU state shape: {gruState.shape}', 2, self.runGruOnWindow.__name__)
+        gruState = self.getInitialGruEncoderState()
 
         for t in range(
                 windowStartTime,
@@ -408,22 +522,21 @@ class ExtremeTime(UnivariateModel):
                 gruState
             )
 
-        return tf.squeeze(gruState)
+        finalState = tf.squeeze(gruState)
+        logger.write(f'GRU final state shape: {finalState.shape}', 2, self.runGruOnWindow.__name__)
 
-    def predictSequence(self, X, logger):
-
-        n = X.shape[0]
-        stateList = self.getLstmStates()
-        yPred = [None] * n
-
-        for i in range(n):
-            yPred[i], stateList = \
-                self.predictTimestep(stateList, X, i)
-
-        yPred = np.array(yPred)
-        return yPred
+        return finalState
 
     def predictTimestep(self, lstmStateList, X, currentTime, logger):
+        """
+        Predict on a Single Timestep
+
+        :param lstmStateList: List of the current two states the LSTM requires
+        :param X: Features, has shape (n, self.inputShape)
+        :param currentTime: Current Timestep
+        :param logger: The logger which would be used to log information
+        :return: The predicted value on current timestep
+        """
 
         logger.write(
             f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}',
@@ -464,20 +577,37 @@ class ExtremeTime(UnivariateModel):
         return pred
 
     def computeAttention(self, embedding):
+        """
+        Computes Attention Weights by taking softmax of the inner product
+        between embedding of the input and the memory states
 
-        return tf.squeeze(tf.nn.softmax(tf.linalg.matmul(
+        :param embedding: Embedding of the input
+        :return: Attention Weight Values
+        """
+
+        return tf.nn.softmax(tf.squeeze(tf.linalg.matmul(
             self.memory,
             tf.expand_dims(embedding, axis=1)
-        ), axis=0))
+        )))
 
-    def getLstmStates(self):
+    def getInitialLstmStates(self):
+        """
+        Computes Initial LSTM States (i.e. both of the initial states)
+
+        :return: Initial LSTM State List
+        """
 
         return self.lstm.get_initial_state(
             batch_size=1,
             dtype=tf.float32
         )
 
-    def getGruEncoderState(self):
+    def getInitialGruEncoderState(self):
+        """
+        Computes Initial GRU Encoder State
+
+        :return: Initial GRU State
+        """
 
         return self.gruEncoder.get_initial_state(
             batch_size=1,
