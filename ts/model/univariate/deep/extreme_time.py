@@ -45,7 +45,7 @@ class ExtremeTime(UnivariateModel):
             self.load(modelLoadPath, logPath, logLevel)
         else:
             logger = FileLogger(logPath, logLevel)
-            logger.write('Initializing Members', 1, self.__init__.__name__)
+            logger.log('Initializing Members', 1, self.__init__.__name__)
 
             self.forecastHorizon = forecastHorizon
             self.memorySize = memorySize
@@ -56,7 +56,7 @@ class ExtremeTime(UnivariateModel):
             self.memory = None
             self.q = None
 
-            logger.write('Building Model Parameters', 1, self.__init__.__name__)
+            logger.log('Building Model Parameters', 1, self.__init__.__name__)
 
             self.gruEncoder = tf.keras.layers.GRUCell(self.encoderStateSize)
             self.gruEncoder.build(input_shape=(self.inputDimension,))
@@ -112,12 +112,10 @@ class ExtremeTime(UnivariateModel):
 
         seqStartTime = self.windowSize
         n = X.shape[0]
-        logger.write(
-            f'Seq Start Time: {seqStartTime}, Train len: {n}', 2, self.train.__name__
-        )
+        logger.log(f'Seq Start Time: {seqStartTime}, Train len: {n}', 2, self.train.__name__)
         assert (seqStartTime < n)
 
-        logger.write('Begin Training', 1, self.train.__name__)
+        logger.log('Begin Training', 1, self.train.__name__)
         while seqStartTime < n:
             seqEndTime = min(seqStartTime + sequenceLength, n - 1)
 
@@ -126,16 +124,13 @@ class ExtremeTime(UnivariateModel):
             endTime = time.time()
             timeTaken = endTime - startTime
 
-            verbose.write(
-                f'start timestep: {seqStartTime}'
-                + f' | end timestep: {seqEndTime}'
-                + f' | time taken: {timeTaken : .2f} sec'
-                + f' | Loss: {loss}',
-                1
-            )
+            verbose.log(f'start timestep: {seqStartTime}'
+                        + f' | end timestep: {seqEndTime}'
+                        + f' | time taken: {timeTaken : .2f} sec'
+                        + f' | Loss: {loss}', 1)
 
             if modelSavePath is not None:
-                logger.write(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
+                logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
 
         self.buildMemory(X, Y, n, logger)
         logger.close()
@@ -164,7 +159,7 @@ class ExtremeTime(UnivariateModel):
         """
 
         logger = FileLogger(logPath, logLevel)
-        logger.write('Begin Prediction', 1, self.trainSequence.__name__)
+        logger.log('Begin Prediction', 1, self.trainSequence.__name__)
 
         X = self.preparePredictData(targetSeries, exogenousSeries, logger)
 
@@ -172,18 +167,15 @@ class ExtremeTime(UnivariateModel):
         lstmStateList = self.getInitialLstmStates()
         Ypred = [None] * n
 
-        logger.write(
-            f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}',
-            2,
-            self.trainSequence.__name__
-        )
+        logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
+                   self.trainSequence.__name__)
 
         for i in range(n):
             Ypred[i], lstmStateList = \
                 self.predictTimestep(lstmStateList, X, i)
 
         Ypred = np.array(Ypred)
-        logger.write(f'Output Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
+        logger.log(f'Output Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
 
         return Ypred
 
@@ -233,9 +225,9 @@ class ExtremeTime(UnivariateModel):
         logger = FileLogger(logPath, logLevel)
 
         assert(self.memory is not None)
-        logger.write(f'Memory Shape: {self.memory.shape}', 2, self.save.__name__)
+        logger.log(f'Memory Shape: {self.memory.shape}', 2, self.save.__name__)
 
-        logger.write('Constructing Dictionary from model params', 1, self.save.__name__)
+        logger.log('Constructing Dictionary from model params', 1, self.save.__name__)
 
         saveDict = {
             'memorySize': self.memorySize,
@@ -252,7 +244,7 @@ class ExtremeTime(UnivariateModel):
             'b': self.b.read_value()
         }
 
-        logger.write('Saving Dictionary', 1, self.save.__name__)
+        logger.log('Saving Dictionary', 1, self.save.__name__)
 
         fl = open(modelSavePath, 'wb')
         pickle.dump(saveDict, fl)
@@ -277,13 +269,13 @@ class ExtremeTime(UnivariateModel):
         """
 
         logger = FileLogger(logPath, logLevel)
-        logger.write('Load Dictionary from Model Params file', 1, self.load.__name__)
+        logger.log('Load Dictionary from Model Params file', 1, self.load.__name__)
 
         fl = open(modelLoadPath, 'rb')
         saveDict = pickle.load(fl)
         fl.close()
 
-        logger.write('Loading Params', 1, self.load.__name__)
+        logger.log('Loading Params', 1, self.load.__name__)
 
         self.memorySize = saveDict['memorySize']
         self.windowSize = saveDict['windowSize']
@@ -321,22 +313,20 @@ class ExtremeTime(UnivariateModel):
         self.inputShape = numExoVariables + 1s
         """
 
-        logger.write('Begin preparing data', 1, self.preparePredictData.__name__)
-        logger.write(f'Target Series Shape: {targetSeries.shape}', 2, self.preparePredictData.__name__)
+        logger.log('Begin preparing data', 1, self.preparePredictData.__name__)
+        logger.log(f'Target Series Shape: {targetSeries.shape}', 2, self.preparePredictData.__name__)
         assert (len(targetSeries.shape) == 1)
 
         trainLength = targetSeries.shape[0] - self.forecastHorizon
 
-        logger.write(f'Train Length: {trainLength}', 2, self.preparePredictData.__name__)
+        logger.log(f'Train Length: {trainLength}', 2, self.preparePredictData.__name__)
         assert (trainLength > 0)
 
-        logger.write(f'Exogenous Series: {exogenousSeries}', 2, self.preparePredictData.__name__)
+        logger.log(f'Exogenous Series: {exogenousSeries}', 2, self.preparePredictData.__name__)
         if self.inputDimension > 1:
             assert (exogenousSeries is not None)
 
-            logger.write(
-                f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.preparePredictData.__name__
-            )
+            logger.log(f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.preparePredictData.__name__)
             assert (exogenousSeries.shape[0] == targetSeries.shape[0])
             assert (exogenousSeries.shape[1] == self.inputDimension - 1)
 
@@ -366,22 +356,20 @@ class ExtremeTime(UnivariateModel):
         shape (n, self.inputShape) since self.inputShape = numExoVariables + 1s
         """
 
-        logger.write('Begin preparing data', 1, self.prepareData.__name__)
-        logger.write(f'Target Series Shape: {targetSeries.shape}', 2, self.prepareData.__name__)
+        logger.log('Begin preparing data', 1, self.prepareData.__name__)
+        logger.log(f'Target Series Shape: {targetSeries.shape}', 2, self.prepareData.__name__)
         assert (len(targetSeries.shape) == 1)
 
         trainLength = targetSeries.shape[0] - self.forecastHorizon
 
-        logger.write(f'Train Length: {trainLength}', 2, self.prepareData.__name__)
+        logger.log(f'Train Length: {trainLength}', 2, self.prepareData.__name__)
         assert (trainLength > 0)
 
-        logger.write(f'Exogenous Series: {exogenousSeries}', 2, self.prepareData.__name__)
+        logger.log(f'Exogenous Series: {exogenousSeries}', 2, self.prepareData.__name__)
         if self.inputDimension > 1:
             assert (exogenousSeries is not None)
 
-            logger.write(
-                f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.prepareData.__name__
-            )
+            logger.log(f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.prepareData.__name__)
             assert (self.forecastHorizon + exogenousSeries.shape[0] == targetSeries.shape[0])
             assert (exogenousSeries.shape[1] == self.inputDimension - 1)
 
@@ -395,7 +383,7 @@ class ExtremeTime(UnivariateModel):
 
         Y = targetSeries[self.forecastHorizon:]
 
-        logger.write(f'X shape: {X.shape}, Y shape: {Y.shape}', 2, self.prepareData.__name__)
+        logger.log(f'X shape: {X.shape}, Y shape: {Y.shape}', 2, self.prepareData.__name__)
         assert (X.shape[0] == Y.shape[0])
 
         return X, Y
@@ -412,22 +400,15 @@ class ExtremeTime(UnivariateModel):
         :return: The loss value resulted from training on the sequence
         """
 
-        logger.write('Begin Training on Sequence', 1, self.trainSequence.__name__)
-        logger.write(
-            f'Sequence start: {seqStartTime}, Sequence end: {seqEndTime}',
-            2,
-            self.trainSequence.__name__
-        )
+        logger.log('Begin Training on Sequence', 1, self.trainSequence.__name__)
+        logger.log(f'Sequence start: {seqStartTime}, Sequence end: {seqEndTime}', 2, self.trainSequence.__name__)
 
         with tf.GradientTape() as tape:
             self.buildMemory(X, Y, seqStartTime, logger)
             lstmStateList = self.getInitialLstmStates()
 
-            logger.write(
-                f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}',
-                2,
-                self.trainSequence.__name__
-            )
+            logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
+                       self.trainSequence.__name__)
 
             Ypred = []
             for t in range(seqStartTime, seqEndTime + 1):
@@ -435,19 +416,19 @@ class ExtremeTime(UnivariateModel):
                 Ypred.append(pred)
 
             Ypred = tf.convert_to_tensor(Ypred, dtype=tf.float32)
-            logger.write(f'Prediction Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
+            logger.log(f'Prediction Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
 
         loss = tf.keras.losses.MSE(
             Ypred,
             Y[seqStartTime: seqEndTime + 1]
         )
-        logger.write(f'Loss: {loss}', 2, self.trainSequence.__name__)
+        logger.log(f'Loss: {loss}', 2, self.trainSequence.__name__)
 
         trainableVars = self.gruEncoder.trainable_variables \
             + self.lstm.trainable_variables \
             + [self.W, self.A, self.b]
 
-        logger.write('Performing Gradient Descent', 1, self.trainSequence.__name__)
+        logger.log('Performing Gradient Descent', 1, self.trainSequence.__name__)
 
         grads = tape.gradient(loss, trainableVars)
         assert(len(trainableVars) == len(grads))
@@ -471,8 +452,8 @@ class ExtremeTime(UnivariateModel):
         :return: None
         """
 
-        logger.write(f'Building Memory', 1, self.buildMemory.__name__)
-        logger.write(f'Current Time: {currentTime}', 2, self.buildMemory.__name__)
+        logger.log(f'Building Memory', 1, self.buildMemory.__name__)
+        logger.log(f'Current Time: {currentTime}', 2, self.buildMemory.__name__)
         assert(currentTime >= self.windowSize)
 
         sampleLow = 0
@@ -493,11 +474,7 @@ class ExtremeTime(UnivariateModel):
         self.memory = tf.stack(self.memory)
         self.q = tf.convert_to_tensor(self.q, dtype=tf.float32)
 
-        logger.write(
-            f'Memory Shape: {self.memory.shape}, Out Shape: {self.q.shape}',
-            2,
-            self.buildMemory.__name__
-        )
+        logger.log(f'Memory Shape: {self.memory.shape}, Out Shape: {self.q.shape}', 2, self.buildMemory.__name__)
 
     def runGruOnWindow(self, X, windowStartTime, logger):
         """
@@ -509,7 +486,7 @@ class ExtremeTime(UnivariateModel):
         :return: The final state after running on the window, it has shape (self.encoderStateSize,)
         """
 
-        logger.write(f'Window Start Time: {windowStartTime}', 2, self.runGruOnWindow.__name__)
+        logger.log(f'Window Start Time: {windowStartTime}', 2, self.runGruOnWindow.__name__)
 
         gruState = self.getInitialGruEncoderState()
 
@@ -523,7 +500,7 @@ class ExtremeTime(UnivariateModel):
             )
 
         finalState = tf.squeeze(gruState)
-        logger.write(f'GRU final state shape: {finalState.shape}', 2, self.runGruOnWindow.__name__)
+        logger.log(f'GRU final state shape: {finalState.shape}', 2, self.runGruOnWindow.__name__)
 
         return finalState
 
@@ -538,11 +515,8 @@ class ExtremeTime(UnivariateModel):
         :return: The predicted value on current timestep
         """
 
-        logger.write(
-            f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}',
-            2,
-            self.predictTimestep.__name__
-        )
+        logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
+                   self.predictTimestep.__name__)
 
         [lstmHiddenState, lstmCellState] = self.lstm(
             X[currentTime],
@@ -553,26 +527,24 @@ class ExtremeTime(UnivariateModel):
             self.A,
             tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
         )
-        logger.write(f'Embedding Shape: {embedding.shape}', 2, self.predictTimestep.__name__)
+        logger.log(f'Embedding Shape: {embedding.shape}', 2, self.predictTimestep.__name__)
 
         attentionWeights = self.computeAttention(embedding)
-        logger.write(
-            f'Attention Shape: {attentionWeights.shape}', 2, self.predictTimestep.__name__
-        )
+        logger.log(f'Attention Shape: {attentionWeights.shape}', 2, self.predictTimestep.__name__)
 
         o1 = tf.squeeze(tf.matmul(
             self.W,
             tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
         ))
-        logger.write(f'Output1: {o1}', 2, self.predictTimestep.__name__)
+        logger.log(f'Output1: {o1}', 2, self.predictTimestep.__name__)
 
         o2 = tf.reduce_sum(attentionWeights * self.q)
-        logger.write(f'Output2: {o1}', 2, self.predictTimestep.__name__)
+        logger.log(f'Output2: {o1}', 2, self.predictTimestep.__name__)
 
         bSigmoid = tf.nn.sigmoid(self.b)
         pred = bSigmoid * o1 + (1 - bSigmoid) * o2, [lstmHiddenState, lstmCellState]
 
-        logger.write(f'Prediction: {pred}', 2, self.predictTimestep.__name__)
+        logger.log(f'Prediction: {pred}', 2, self.predictTimestep.__name__)
 
         return pred
 
