@@ -23,13 +23,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0f261cf3-a71b-4fe3-9a94-55b0bdd1c623" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Forecast.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Forecast.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/other/model2/saveLoad.py" beforeDir="false" afterPath="$PROJECT_DIR$/other/model2/saveLoad.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ts/model/univariate/deep/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/ts/model/univariate/deep/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ts/model/univariate/deep/extreme_time/extreme_time.py" beforeDir="false" afterPath="$PROJECT_DIR$/ts/model/univariate/deep/extreme_time/extreme_time.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ts/model/univariate/deep/extreme_time.py" beforeDir="false" afterPath="$PROJECT_DIR$/ts/model/univariate/deep/extreme_time.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ts/model/univariate/univariate.py" beforeDir="false" afterPath="$PROJECT_DIR$/ts/model/univariate/univariate.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,6 +55,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/ts/model/univariate/deep" />
       <recent name="$PROJECT_DIR$/ts/model/univariate/deep/extreme_time" />
     </key>
   </component>
@@ -86,9 +83,9 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup" timestamp="1604743037227">
+    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup" timestamp="1604747809154">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1604743037227" />
+    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1604747809154" />
   </component>
 </project>

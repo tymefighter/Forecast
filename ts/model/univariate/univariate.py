@@ -9,7 +9,7 @@ class UnivariateModel:
             sequenceLength,
             exogenousSeries=None,
             modelSavePath=None,
-            verbose=1,
+            verboseLevel=1,
             logPath=DEFAULT_LOG_PATH,
             logLevel=1
     ):
@@ -25,7 +25,7 @@ class UnivariateModel:
         considered
         :param modelSavePath: Path where to save the model parameters after
         each training an a sequence, if None then parameters are not saved
-        :param verbose: Verbose level, 0 is nothing, greater values increases
+        :param verboseLevel: Verbose level, 0 is nothing, greater values increases
         the information printed to the console
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate

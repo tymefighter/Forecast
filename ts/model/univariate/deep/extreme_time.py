@@ -1,8 +1,11 @@
 import pickle
+import time
+
 import tensorflow as tf
+import numpy as np
 
 from ts.model.univariate.univariate import UnivariateModel
-from ts.log import DEFAULT_LOG_PATH, FileLogger
+from ts.log import DEFAULT_LOG_PATH, FileLogger, ConsoleLogger
 
 
 class ExtremeTime(UnivariateModel):
@@ -76,7 +79,7 @@ class ExtremeTime(UnivariateModel):
             sequenceLength,
             exogenousSeries=None,
             modelSavePath=None,
-            verbose=1,
+            verboseLevel=1,
             logPath=DEFAULT_LOG_PATH,
             logLevel=1
     ):
@@ -84,7 +87,7 @@ class ExtremeTime(UnivariateModel):
         Train the Model Parameters on the provided data
 
         :param targetSeries: Univariate Series of the Target Variable, it
-        should be a numpy array of shape (n,)
+        should be a numpy array of shape (n + self.forecastHorizon,)
         :param sequenceLength: Length of each training sequence
         :param exogenousSeries: Series of exogenous Variables, it should be a
         numpy array of shape (n, self.numExoVariables), it can be None only if
@@ -92,14 +95,44 @@ class ExtremeTime(UnivariateModel):
         considered
         :param modelSavePath: Path where to save the model parameters after
         each training an a sequence, if None then parameters are not saved
-        :param verbose: Verbose level, 0 is nothing, greater values increases
+        :param verboseLevel: Verbose level, 0 is nothing, greater values increases
         the information printed to the console
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate
         more information
         :return: None
         """
-        pass
+
+        logger = FileLogger(logPath, logLevel)
+        verbose = ConsoleLogger(verboseLevel)
+
+        X, Y = self.prepareData(targetSeries, exogenousSeries, logger)
+
+        sequenceStartTime = self.windowSize
+        n = X.shape[0]
+        logger.write(
+            f'Seq Start Time: {sequenceStartTime}, Train len: {n}', 3, self.train.__name__
+        )
+        assert (sequenceStartTime < n)
+
+        logger.write('Begin Training', 2, self.train.__name__)
+        while sequenceStartTime < n:
+            sequenceEndTime = min(sequenceStartTime + sequenceLength, n - 1)
+
+            startTime = time.time()
+            loss = self.trainSequence(X, Y, sequenceStartTime, sequenceEndTime, logger)
+            endTime = time.time()
+            timeTaken = endTime - startTime
+
+            verbose.write(
+                f'start timestep: {sequenceStartTime}'
+                + f' | end timestep: {sequenceEndTime}'
+                + f' | time taken: {timeTaken : .2f} sec'
+                + f' | Loss: {loss}',
+                1
+            )
+
+        logger.close()
 
     def predict(
             self,
@@ -244,6 +277,41 @@ class ExtremeTime(UnivariateModel):
         self.A = tf.Variable(saveDict['A'])
         self.b = tf.Variable(saveDict['b'])
 
+    def prepareData(self, targetSeries, exogenousSeries, logger):
+        logger.write('Begin preparing data', 2, self.prepareData.__name__)
+
+        logger.write(f'Target Series Shape: {targetSeries.shape}', 3, self.prepareData.__name__)
+        assert (len(targetSeries.shape) == 1)
+
+        trainLength = targetSeries.shape[0] - self.forecastHorizon
+        logger.write(f'Train Length: {trainLength}', 3, self.prepareData.__name__)
+        assert (trainLength > 0)
+
+        logger.write(f'Exogenous Series: {exogenousSeries}', 3, self.prepareData.__name__)
+        if self.inputDimension > 1:
+            assert (exogenousSeries is not None)
+
+            logger.write(
+                f'Exogenous Series Shape: {exogenousSeries.shape}', 3, self.prepareData.__name__
+            )
+            assert (self.forecastHorizon + exogenousSeries.shape[0] == targetSeries.shape[0])
+            assert (exogenousSeries.shape[1] == self.inputDimension - 1)
+
+            X = np.concatenate(
+                [exogenousSeries, np.expand_dims(targetSeries[:trainLength], axis=1)],
+                axis=1
+            )
+        else:
+            assert (exogenousSeries is None)
+            X = np.expand_dims(targetSeries[:trainLength], axis=1)
+
+        Y = targetSeries[self.forecastHorizon:]
+
+        logger.write(f'X shape: {X.shape}, Y shape: {Y.shape}', 3, self.prepareData.__name__)
+        assert (X.shape[0] == Y.shape[0])
+
+        return X, Y
+
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, logger):
         pass
 
@@ -261,5 +329,3 @@ class ExtremeTime(UnivariateModel):
 
     def computeAttention(self, embedding):
         pass
-
-
