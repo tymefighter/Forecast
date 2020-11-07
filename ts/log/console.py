@@ -2,6 +2,7 @@ from ts.log.logger import Logger
 
 
 class ConsoleLogger(Logger):
+    """Console Logger"""
 
     def __init__(self, logLevel=1):
         """

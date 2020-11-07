@@ -2,6 +2,7 @@ from ts.log.logger import Logger
 
 
 class FileLogger(Logger):
+    """File Logger"""
 
     def __init__(self, filepath, logLevel=1):
         """
