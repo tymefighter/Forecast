@@ -9,7 +9,7 @@ class ConsoleLogger(Logger):
     def setLevel(self, logLevel):
         self.logLevel = logLevel
 
-    def write(self, message, level, functionName=None):
+    def log(self, message, level, functionName=None):
         if self.logLevel >= level:
             if functionName is not None:
                 print(functionName + ": " + message, end='\n')
