@@ -1,12 +1,12 @@
-class Logger:
+DEFAULT_LOG_PATH = '~/forecast.log'
 
-    def __init__(self, verboseLevel = 1):
-        pass
+
+class Logger:
 
     def setLevel(self, verboseLevel):
         pass
 
-    def write(self, message, level):
+    def write(self, message, level, functionName=None):
         pass
 
     def close(self):

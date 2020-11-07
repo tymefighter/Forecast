@@ -9,7 +9,7 @@ def saveModel(self, modelFilepath):
     modelFilepath: Path where to save the model information
     """
 
-    if self.S is None:
+    if self.memory is None:
         raise Exception('Memory not constructed - cannot save model')
     
     saveDict = {

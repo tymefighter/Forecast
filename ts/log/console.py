@@ -3,15 +3,18 @@ from ts.log.logger import Logger
 
 class ConsoleLogger(Logger):
 
-    def __init__(self, logLevel = 1):
-        self.verboseLevel = logLevel
+    def __init__(self, logLevel=1):
+        self.logLevel = logLevel
 
     def setLevel(self, logLevel):
         self.logLevel = logLevel
 
-    def write(self, message, level):
+    def write(self, message, level, functionName=None):
         if self.logLevel >= level:
-            print(message)
+            if functionName is not None:
+                print(functionName + ": " + message, end='\n')
+            else:
+                print(message, end='\n')
 
     def close(self):
         pass
