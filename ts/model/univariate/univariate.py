@@ -11,7 +11,8 @@ class UnivariateModel:
             modelSavePath=None,
             verboseLevel=1,
             logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            logLevel=1,
+            returnLosses=True
     ):
         """
         Train the Model Parameters on the provided data
@@ -29,8 +30,11 @@ class UnivariateModel:
         the information printed to the console
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more informations
-        :return: None
+        more information
+        :param returnLosses: If True, then losses are returned, else losses are not
+        returned
+        :return: If returnLosses is True, then numpy array of losses of shape (numSeq,)
+        is returned, else None is returned
         """
         pass
 
