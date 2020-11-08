@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib
 
 
 class Plot:
@@ -17,15 +18,22 @@ class Plot:
         :return: None
         """
 
+        matplotlib.use('TkAgg')
+
         (T, d) = X.shape
-        fig, ax = plt.subplots(d)
+        fig, axes = plt.subplots(d)
 
         for dim in range(d):
-            ax[dim].plot(X[:, dim])
+            if d == 1:
+                ax = axes
+            else:
+                ax = axes[0]
 
+            ax.plot(X[:, dim])
             if colNames is not None:
-                ax[dim].set_title(colNames[dim])
+                ax.set_title(colNames[dim])
 
+        fig.suptitle(title)
         plt.show()
 
     @staticmethod
@@ -41,5 +49,10 @@ class Plot:
         :return: None
         """
 
-        plt.plot(loss, title=title, xlabel=xlabel, ylabel=ylabel)
+        matplotlib.use('TkAgg')
+
+        plt.plot(loss)
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
         plt.show()

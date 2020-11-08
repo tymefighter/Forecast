@@ -1,4 +1,4 @@
-from ts.log.logger import DEFAULT_LOG_PATH
+from ts.log import DEFAULT_LOG_PATH
 
 
 class UnivariateModel:
