@@ -82,7 +82,8 @@ class ExtremeTime(UnivariateModel):
             modelSavePath=None,
             verboseLevel=1,
             logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            logLevel=1,
+            returnLosses=True
     ):
         """
         Train the Model Parameters on the provided data
@@ -102,7 +103,10 @@ class ExtremeTime(UnivariateModel):
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate
         more information
-        :return: None
+        :param returnLosses: If True, then losses are returned, else losses are not
+        returned
+        :return: If returnLosses is True, then numpy array of losses of shape (numSeq,)
+        is returned, else None is returned
         """
 
         logger = FileLogger(logPath, logLevel)
@@ -116,6 +120,10 @@ class ExtremeTime(UnivariateModel):
         assert (seqStartTime < n)
 
         logger.log('Begin Training', 1, self.train.__name__)
+
+        if returnLosses:
+            losses = []
+
         while seqStartTime < n:
             seqEndTime = min(seqStartTime + sequenceLength, n - 1)
 
@@ -129,11 +137,17 @@ class ExtremeTime(UnivariateModel):
                         + f' | time taken: {timeTaken : .2f} sec'
                         + f' | Loss: {loss}', 1)
 
+            if returnLosses:
+                losses.append(loss)
+
             if modelSavePath is not None:
                 logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
 
         self.buildMemory(X, Y, n, logger)
         logger.close()
+
+        if returnLosses:
+            return np.array(losses)
 
     def predict(
             self,
