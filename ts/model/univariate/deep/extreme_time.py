@@ -41,6 +41,8 @@ class ExtremeTime(UnivariateModel):
         more information
         """
 
+        tf.keras.backend.set_floatx('float64')
+
         if modelLoadPath is not None:
             self.load(modelLoadPath, logPath, logLevel)
         else:
@@ -64,12 +66,12 @@ class ExtremeTime(UnivariateModel):
             self.lstm = tf.keras.layers.LSTMCell(self.lstmStateSize)
             self.lstm.build(input_shape=(self.inputDimension,))
 
-            self.W = tf.Variable(tf.random.normal((1, self.lstmStateSize)))
+            self.W = tf.Variable(tf.random.normal((1, self.lstmStateSize), dtype=tf.float64))
             self.A = tf.Variable(
-                tf.random.normal((self.encoderStateSize, self.lstmStateSize))
+                tf.random.normal((self.encoderStateSize, self.lstmStateSize), dtype=tf.float64)
             )
 
-            self.b = tf.Variable(0)
+            self.b = tf.Variable(0, dtype=tf.float64)
 
             logger.close()
 
@@ -78,7 +80,7 @@ class ExtremeTime(UnivariateModel):
             targetSeries,
             sequenceLength,
             exogenousSeries=None,
-            optimizer=tf.optimizers.Adam,
+            optimizer=tf.optimizers.Adam(),
             modelSavePath=None,
             verboseLevel=1,
             logPath=DEFAULT_LOG_PATH,
@@ -142,6 +144,8 @@ class ExtremeTime(UnivariateModel):
 
             if modelSavePath is not None:
                 logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
+
+            seqStartTime += sequenceLength
 
         self.buildMemory(X, Y, n, logger)
         logger.close()
@@ -429,14 +433,14 @@ class ExtremeTime(UnivariateModel):
                 pred, lstmStateList = self.predictTimestep(lstmStateList, X, t, logger)
                 Ypred.append(pred)
 
-            Ypred = tf.convert_to_tensor(Ypred, dtype=tf.float32)
+            Ypred = tf.convert_to_tensor(Ypred, dtype=tf.float64)
             logger.log(f'Prediction Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
 
-        loss = tf.keras.losses.MSE(
-            Ypred,
-            Y[seqStartTime: seqEndTime + 1]
-        )
-        logger.log(f'Loss: {loss}', 2, self.trainSequence.__name__)
+            loss = tf.keras.losses.MSE(
+                Ypred,
+                Y[seqStartTime: seqEndTime + 1]
+            )
+            logger.log(f'Loss: {loss}', 2, self.trainSequence.__name__)
 
         trainableVars = self.gruEncoder.trainable_variables \
             + self.lstm.trainable_variables \
@@ -482,11 +486,11 @@ class ExtremeTime(UnivariateModel):
                 sampleHigh + 1
             )
 
-            self.memory[i] = self.runGruOnWindow(X, windowStartTime)
+            self.memory[i] = self.runGruOnWindow(X, windowStartTime, logger)
             self.q[i] = Y[windowStartTime + self.windowSize - 1]
 
         self.memory = tf.stack(self.memory)
-        self.q = tf.convert_to_tensor(self.q, dtype=tf.float32)
+        self.q = tf.convert_to_tensor(self.q, dtype=tf.float64)
 
         logger.log(f'Memory Shape: {self.memory.shape}, Out Shape: {self.q.shape}', 2, self.buildMemory.__name__)
 
@@ -533,14 +537,14 @@ class ExtremeTime(UnivariateModel):
                    self.predictTimestep.__name__)
 
         [lstmHiddenState, lstmCellState] = self.lstm(
-            X[currentTime],
+            np.expand_dims(X[currentTime], axis=0),
             lstmStateList
-        )
+        )[1]
 
-        embedding = tf.matmul(
+        embedding = tf.squeeze(tf.matmul(
             self.A,
             tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
-        )
+        ))
         logger.log(f'Embedding Shape: {embedding.shape}', 2, self.predictTimestep.__name__)
 
         attentionWeights = self.computeAttention(embedding)
@@ -556,11 +560,11 @@ class ExtremeTime(UnivariateModel):
         logger.log(f'Output2: {o1}', 2, self.predictTimestep.__name__)
 
         bSigmoid = tf.nn.sigmoid(self.b)
-        pred = bSigmoid * o1 + (1 - bSigmoid) * o2, [lstmHiddenState, lstmCellState]
+        pred = bSigmoid * o1 + (1 - bSigmoid) * o2
 
         logger.log(f'Prediction: {pred}', 2, self.predictTimestep.__name__)
 
-        return pred
+        return pred, [lstmHiddenState, lstmCellState]
 
     def computeAttention(self, embedding):
         """
@@ -585,7 +589,7 @@ class ExtremeTime(UnivariateModel):
 
         return self.lstm.get_initial_state(
             batch_size=1,
-            dtype=tf.float32
+            dtype=tf.float64
         )
 
     def getInitialGruEncoderState(self):
@@ -597,5 +601,5 @@ class ExtremeTime(UnivariateModel):
 
         return self.gruEncoder.get_initial_state(
             batch_size=1,
-            dtype=tf.float32
+            dtype=tf.float64
         )

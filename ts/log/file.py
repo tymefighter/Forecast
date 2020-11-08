@@ -12,7 +12,7 @@ class FileLogger(Logger):
         :param logLevel: Logging Level on which the Logger operates on
         """
 
-        self.file = open(filepath, 'a')
+        self.file = open(filepath, 'a+')
         self.logLevel = logLevel
 
     def setLevel(self, logLevel):

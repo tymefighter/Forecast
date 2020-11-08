@@ -1,6 +1,3 @@
-DEFAULT_LOG_PATH = '~/forecast.log'
-
-
 class Logger:
     """Base Logger Class"""
 
