@@ -72,7 +72,7 @@ def extremeData(n):
 def main():
 
     typeData = 'extreme'
-    n = 50000
+    n = 10000
 
     if typeData == 'extreme':
         targets = extremeData(n)

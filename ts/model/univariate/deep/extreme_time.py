@@ -144,6 +144,11 @@ class ExtremeTime(UnivariateModel):
 
             if modelSavePath is not None:
                 logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
+                logger.close()
+
+                self.save(modelSavePath, logPath, logLevel)
+
+                logger = FileLogger(logPath, logLevel)
 
             seqStartTime += sequenceLength
 
@@ -188,9 +193,9 @@ class ExtremeTime(UnivariateModel):
         logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
                    self.trainSequence.__name__)
 
-        for i in range(n):
-            Ypred[i], lstmStateList = \
-                self.predictTimestep(lstmStateList, X, i)
+        for t in range(n):
+            Ypred[t], lstmStateList = \
+                self.predictTimestep(lstmStateList, X, t, logger)
 
         Ypred = np.array(Ypred)
         logger.log(f'Output Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
@@ -222,7 +227,32 @@ class ExtremeTime(UnivariateModel):
         more information
         :return: Loss of the predicted and true targets
         """
-        pass
+
+        logger = FileLogger(logPath, logLevel)
+        logger.log('Begin Evaluating', 1, self.evaluate.__name__)
+
+        n = targetSeries.shape[0] - self.forecastHorizon
+        logger.log(f'Evaluate Sequence Length: {n}', 2, self.evaluate.__name__)
+        assert (n >= 0)
+
+        if exogenousSeries is not None:
+            logger.log(
+                f'Exogenous Series Shape: {exogenousSeries.shape}',
+                2,
+                self.evaluate.__name.__
+            )
+            assert (exogenousSeries.shape[0] == n)
+
+        logger.close()
+        Ypred = self.predict(targetSeries[:n], exogenousSeries, logPath, logLevel)
+
+        loss = tf.keras.losses.MSE(targetSeries[self.forecastHorizon:], Ypred)
+
+        logger = FileLogger(logPath, logLevel)
+        logger.log(f'Computed Loss: {loss}', 2, self.evaluate.__name__)
+        logger.close()
+
+        return loss
 
     def save(
             self,
@@ -248,6 +278,7 @@ class ExtremeTime(UnivariateModel):
         logger.log('Constructing Dictionary from model params', 1, self.save.__name__)
 
         saveDict = {
+            'forecastHorizon': self.forecastHorizon,
             'memorySize': self.memorySize,
             'windowSize': self.windowSize,
             'inputDimension': self.inputDimension,
@@ -295,6 +326,7 @@ class ExtremeTime(UnivariateModel):
 
         logger.log('Loading Params', 1, self.load.__name__)
 
+        self.forecastHorizon = saveDict['forecastHorizon']
         self.memorySize = saveDict['memorySize']
         self.windowSize = saveDict['windowSize']
         self.inputDimension = saveDict['inputDimension']
@@ -335,10 +367,10 @@ class ExtremeTime(UnivariateModel):
         logger.log(f'Target Series Shape: {targetSeries.shape}', 2, self.preparePredictData.__name__)
         assert (len(targetSeries.shape) == 1)
 
-        trainLength = targetSeries.shape[0] - self.forecastHorizon
+        n = targetSeries.shape[0]
 
-        logger.log(f'Train Length: {trainLength}', 2, self.preparePredictData.__name__)
-        assert (trainLength > 0)
+        logger.log(f'Length: {n}', 2, self.preparePredictData.__name__)
+        assert (n > 0)
 
         logger.log(f'Exogenous Series: {exogenousSeries}', 2, self.preparePredictData.__name__)
         if self.inputDimension > 1:
@@ -349,12 +381,12 @@ class ExtremeTime(UnivariateModel):
             assert (exogenousSeries.shape[1] == self.inputDimension - 1)
 
             X = np.concatenate(
-                [exogenousSeries, np.expand_dims(targetSeries[:trainLength], axis=1)],
+                [exogenousSeries, np.expand_dims(targetSeries[:n], axis=1)],
                 axis=1
             )
         else:
             assert (exogenousSeries is None)
-            X = np.expand_dims(targetSeries[:trainLength], axis=1)
+            X = np.expand_dims(targetSeries[:n], axis=1)
 
         return X
 
@@ -437,8 +469,8 @@ class ExtremeTime(UnivariateModel):
             logger.log(f'Prediction Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
 
             loss = tf.keras.losses.MSE(
-                Ypred,
-                Y[seqStartTime: seqEndTime + 1]
+                Y[seqStartTime: seqEndTime + 1],
+                Ypred
             )
             logger.log(f'Loss: {loss}', 2, self.trainSequence.__name__)
 
