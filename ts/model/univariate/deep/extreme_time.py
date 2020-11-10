@@ -85,7 +85,8 @@ class ExtremeTime(UnivariateModel):
             verboseLevel=1,
             logPath=DEFAULT_LOG_PATH,
             logLevel=1,
-            returnLosses=True
+            returnLosses=True,
+            numIterations=1
     ):
         """
         Train the Model Parameters on the provided data
@@ -107,6 +108,7 @@ class ExtremeTime(UnivariateModel):
         more information
         :param returnLosses: If True, then losses are returned, else losses are not
         returned
+        :param numIterations: Number of iterations of training to be performed
         :return: If returnLosses is True, then numpy array of losses of shape (numSeq,)
         is returned, else None is returned
         """
@@ -116,41 +118,46 @@ class ExtremeTime(UnivariateModel):
 
         X, Y = self.prepareData(targetSeries, exogenousSeries, logger)
 
-        seqStartTime = self.windowSize
         n = X.shape[0]
-        logger.log(f'Seq Start Time: {seqStartTime}, Train len: {n}', 2, self.train.__name__)
-        assert (seqStartTime < n)
+        logger.log(f'Seq Start Time: {self.windowSize}, Train len: {n}', 2, self.train.__name__)
+        assert (self.windowSize < n)
 
         logger.log('Begin Training', 1, self.train.__name__)
 
         if returnLosses:
             losses = []
 
-        while seqStartTime < n:
-            seqEndTime = min(seqStartTime + sequenceLength, n - 1)
+        for iteration in range(numIterations):
 
-            startTime = time.time()
-            loss = self.trainSequence(X, Y, seqStartTime, seqEndTime, optimizer, logger)
-            endTime = time.time()
-            timeTaken = endTime - startTime
+            seqStartTime = self.windowSize
 
-            verbose.log(f'start timestep: {seqStartTime}'
-                        + f' | end timestep: {seqEndTime}'
-                        + f' | time taken: {timeTaken : .2f} sec'
-                        + f' | Loss: {loss}', 1)
+            verbose.log(f'begin iteration {iteration}', 1)
 
-            if returnLosses:
-                losses.append(loss)
+            while seqStartTime < n:
+                seqEndTime = min(seqStartTime + sequenceLength, n - 1)
 
-            if modelSavePath is not None:
-                logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
-                logger.close()
+                startTime = time.time()
+                loss = self.trainSequence(X, Y, seqStartTime, seqEndTime, optimizer, logger)
+                endTime = time.time()
+                timeTaken = endTime - startTime
 
-                self.save(modelSavePath, logPath, logLevel)
+                verbose.log(f'start timestep: {seqStartTime}'
+                            + f' | end timestep: {seqEndTime}'
+                            + f' | time taken: {timeTaken : .2f} sec'
+                            + f' | Loss: {loss}', 1)
 
-                logger = FileLogger(logPath, logLevel)
+                if returnLosses:
+                    losses.append(loss)
 
-            seqStartTime += sequenceLength
+                if modelSavePath is not None:
+                    logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
+                    logger.close()
+
+                    self.save(modelSavePath, logPath, logLevel)
+
+                    logger = FileLogger(logPath, logLevel)
+
+                seqStartTime += sequenceLength
 
         self.buildMemory(X, Y, n, logger)
         logger.close()
@@ -207,7 +214,8 @@ class ExtremeTime(UnivariateModel):
             targetSeries,
             exogenousSeries=None,
             logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            logLevel=1,
+            returnPred=False
     ):
         """
         Forecast using the model parameters on the provided data, evaluates
@@ -225,7 +233,10 @@ class ExtremeTime(UnivariateModel):
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate
         more information
-        :return: Loss of the predicted and true targets
+        :param returnPred: If True, then return predictions along with loss, else
+        return on loss
+        :return: If True, then return predictions along with loss of the predicted
+        and true targets, else return only loss
         """
 
         logger = FileLogger(logPath, logLevel)
@@ -252,7 +263,10 @@ class ExtremeTime(UnivariateModel):
         logger.log(f'Computed Loss: {loss}', 2, self.evaluate.__name__)
         logger.close()
 
-        return loss
+        if returnPred:
+            return loss, Ypred
+        else:
+            return loss
 
     def save(
             self,
@@ -589,7 +603,7 @@ class ExtremeTime(UnivariateModel):
         logger.log(f'Output1: {o1}', 2, self.predictTimestep.__name__)
 
         o2 = tf.reduce_sum(attentionWeights * self.q)
-        logger.log(f'Output2: {o1}', 2, self.predictTimestep.__name__)
+        logger.log(f'Output2: {o2}', 2, self.predictTimestep.__name__)
 
         bSigmoid = tf.nn.sigmoid(self.b)
         pred = bSigmoid * o1 + (1 - bSigmoid) * o2

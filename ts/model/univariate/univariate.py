@@ -67,7 +67,8 @@ class UnivariateModel:
             targetSeries,
             exogenousSeries=None,
             logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            logLevel=1,
+            returnPred=False
     ):
         """
         Forecast using the model parameters on the provided data, evaluates
@@ -85,7 +86,10 @@ class UnivariateModel:
         :param logPath: Path where to log the information
         :param logLevel: Logging level, 0 means no logging, greater values indicate
         more information
-        :return: Loss of the predicted and true targets
+        :param returnPred: If True, then return predictions along with loss, else
+        return on loss
+        :return: If True, then return predictions along with loss of the predicted
+        and true targets, else return only loss
         """
         pass
 
