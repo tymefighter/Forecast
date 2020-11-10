@@ -56,3 +56,26 @@ class Plot:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.show()
+
+    @staticmethod
+    def plotPredTrue(pred, target, title='Pred and True', xlabel='Timestep', ylabel='Value'):
+        """
+        Plot Predictions and True Targets
+
+        :param pred: Predictions
+        :param target: True Targets
+        :param title: Title of the plot
+        :param xlabel: x-axis Label of the plot
+        :param ylabel: y-axis Label of the plot
+        :return: None
+        """
+
+        matplotlib.use('TkAgg')
+
+        plt.plot(pred, 'b', label='pred')
+        plt.plot(target, 'r', label='true')
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.legend()
+        plt.show()
