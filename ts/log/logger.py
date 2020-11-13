@@ -1,3 +1,9 @@
+import os
+
+
+DEFAULT_LOG_PATH = os.path.expanduser('~/forecast.log')
+
+
 class Logger:
     """Base Logger Class"""
 
