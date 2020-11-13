@@ -4,6 +4,7 @@ import os
 from ts.data.univariate.nonexo import ArmaGenerator
 from ts.model.univariate.deep import ExtremeTime
 from ts.plot import Plot
+from ts.log import GlobalLogger
 
 
 def simpleData(n):
@@ -87,6 +88,8 @@ def extremeData2(n):
 
 
 def main():
+    GlobalLogger.getLogger().setLevel(2)
+
     n = 5500
     trainN = 5000
     horizon = 1
@@ -98,21 +101,20 @@ def main():
     Plot.plotDataCols(np.expand_dims(targets, axis=1))
 
     modelSavePath = os.path.expanduser('~/extreme.model')
-    model = ExtremeTime(horizon, 80, 40, 10, 10, 0, logLevel=2)
+    model = ExtremeTime(horizon, 80, 40, 10, 10, 0)
 
     losses = model.train(
         trainTargets,
         100,
         modelSavePath=modelSavePath,
         verboseLevel=2,
-        logLevel=2,
         returnLosses=True,
         numIterations=3
     )
 
     Plot.plotLoss(losses, xlabel='seq')
 
-    loss, Ypred = model.evaluate(testTargets, logLevel=2, returnPred=True)
+    loss, Ypred = model.evaluate(testTargets, returnPred=True)
 
     print(f'Test Loss Value: {loss}')
     Plot.plotPredTrue(Ypred, testTargets[horizon:])

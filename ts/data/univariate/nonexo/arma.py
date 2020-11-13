@@ -1,7 +1,7 @@
 import numpy as np
 
 from ts.data.univariate.nonexo.non_exo import UnivariateNonExogenous
-from ts.log import DEFAULT_LOG_PATH, FileLogger
+from ts.log import GlobalLogger
 
 
 class ArmaGenerator(UnivariateNonExogenous):
@@ -14,9 +14,7 @@ class ArmaGenerator(UnivariateNonExogenous):
             noiseGenFunc,
             noiseGenParams,
             obsFunc=None,
-            noiseFunc=None,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            noiseFunc=None
     ):
         """
         Initialize Data Generator
@@ -29,12 +27,10 @@ class ArmaGenerator(UnivariateNonExogenous):
         current observation. It may add non-linearity to the time series.
         :param noiseFunc: Function to be applied on the previous noise terms while computing
         current observation. It may add non-linearity to the time series.
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
         more information
         """
 
-        logger = FileLogger(logPath, logLevel)
+        logger = GlobalLogger.getLogger()
         logger.log('Initialize ARMA coefficients', 1, self.__init__.__name__)
 
         logger.log(
@@ -59,10 +55,10 @@ class ArmaGenerator(UnivariateNonExogenous):
 
         logger.close()
 
-    def generate(self, n, logPath=DEFAULT_LOG_PATH, logLevel=1):
+    def generate(self, n):
         """Generates Sequence of the Provided Length"""
 
-        logger = FileLogger(logPath, logLevel)
+        logger = GlobalLogger.getLogger()
         logger.log(f'Generating Data of length {n}', 1, self.generate.__name__)
 
         p = self.obsCoef.shape[0]
