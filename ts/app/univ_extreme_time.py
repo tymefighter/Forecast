@@ -23,8 +23,8 @@ def simpleData(n):
     noiseGenFunc = np.random.normal
     noiseGenParams = (10.0, 1.0)
 
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams, logLevel=2) \
-        .generate(n, logLevel=2)
+    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
+        .generate(n)
 
 
 def longTermData(n):
@@ -43,8 +43,8 @@ def longTermData(n):
     noiseGenFunc = np.random.normal
     noiseGenParams = (10.0, 1.0)
 
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams, logLevel=2) \
-        .generate(n, logLevel=2)
+    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
+        .generate(n)
 
 
 def extremeData1(n):
@@ -63,8 +63,8 @@ def extremeData1(n):
     noiseGenFunc = np.random.lognormal
     noiseGenParams = (1.0, 1.0)
 
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams, logLevel=2) \
-        .generate(n, logLevel=2)
+    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
+        .generate(n)
 
 
 def extremeData2(n):
@@ -83,8 +83,8 @@ def extremeData2(n):
     noiseGenFunc = np.random.gumbel
     noiseGenParams = (100., 10.0)
 
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams, logLevel=2) \
-        .generate(n, logLevel=2)
+    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
+        .generate(n)
 
 
 def main():

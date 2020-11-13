@@ -53,8 +53,6 @@ class ArmaGenerator(UnivariateNonExogenous):
         self.obsFunc = obsFunc
         self.noiseFunc = noiseFunc
 
-        logger.close()
-
     def generate(self, n):
         """Generates Sequence of the Provided Length"""
 
@@ -87,7 +85,5 @@ class ArmaGenerator(UnivariateNonExogenous):
 
             eps[t] = self.noiseGenFunc(*self.noiseGenParams)
             x[t] += eps[t]
-
-        logger.close()
 
         return x

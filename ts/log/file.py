@@ -4,15 +4,19 @@ from ts.log.logger import Logger
 class FileLogger(Logger):
     """File Logger"""
 
-    def __init__(self, filepath, logLevel=1):
+    def __init__(self, filepath, logLevel=1, erasePrevContent=False):
         """
         Initialize File Logger
 
         :param filepath: Path of the Log File
         :param logLevel: Logging Level on which the Logger operates on
+        :param erasePrevContent: Erase Previous Content of file or not
         """
 
-        self.file = open(filepath, 'a+')
+        if erasePrevContent:
+            self.file = open(filepath, 'w')
+        else:
+            self.file = open(filepath, 'a')
         self.logLevel = logLevel
 
     def setLevel(self, logLevel):

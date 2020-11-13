@@ -9,7 +9,7 @@ class GlobalLogger:
     """
 
     """ Static logger object """
-    logger = FileLogger(DEFAULT_LOG_PATH)
+    logger = FileLogger(DEFAULT_LOG_PATH, logLevel=1, erasePrevContent=True)
 
     @staticmethod
     def getLogger():
