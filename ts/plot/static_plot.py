@@ -72,8 +72,8 @@ class Plot:
 
         matplotlib.use('TkAgg')
 
-        plt.plot(pred, 'b', label='pred')
         plt.plot(target, 'r', label='true')
+        plt.plot(pred, 'b', label='pred')
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
