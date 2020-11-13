@@ -103,18 +103,18 @@ def main():
     trainN = 1400
     horizon = 1
 
-    targets = extremeData2(n)
+    targets = simpleData1(n)
     trainTargets = targets[:trainN]
     testTargets = targets[trainN:]
 
     Plot.plotDataCols(np.expand_dims(targets, axis=1))
 
-    model = ExtremeTime2(horizon, 20, 20, 20, 20, 0)
+    model = ExtremeTime2(horizon, 10, 10, 20, 20, 0)
 
     losses = model.train(
         trainTargets,
         100,
-        optimizer=tf.optimizers.Adam(0.7),
+        optimizer=tf.optimizers.Adam(0.3),
         verboseLevel=2,
         returnLosses=True,
         numIterations=5
