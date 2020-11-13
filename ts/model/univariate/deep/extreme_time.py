@@ -15,8 +15,8 @@ class ExtremeTime(UnivariateModel):
             forecastHorizon=1,
             memorySize=80,
             windowSize=60,
-            encoderStateSize=10,
-            lstmStateSize=10,
+            embeddingSize=10,
+            contextSize=10,
             numExoVariables=0,
             modelLoadPath=None,
             logPath=DEFAULT_LOG_PATH,
@@ -31,8 +31,8 @@ class ExtremeTime(UnivariateModel):
         should be a scalar value
         :param windowSize: Size of each window which is to be compressed and stored
         as a memory cell
-        :param encoderStateSize: Size of the hidden state of the GRU encoder
-        :param lstmStateSize: Size of the hidden state of the LSTM used in the model
+        :param embeddingSize: Size of the hidden state of the GRU encoder
+        :param contextSize: Size of context produced from historical sequences
         :param numExoVariables: Number of exogenous variables to be used for training
         :param modelLoadPath: If specified, then all provided parameters (except logging)
         are ignored, and the model is loaded from the path
@@ -52,26 +52,25 @@ class ExtremeTime(UnivariateModel):
             self.forecastHorizon = forecastHorizon
             self.memorySize = memorySize
             self.windowSize = windowSize
-            self.encoderStateSize = encoderStateSize
-            self.lstmStateSize = lstmStateSize
+            self.embeddingSize = embeddingSize
+            self.contextSize = contextSize
             self.inputDimension = numExoVariables + 1
             self.memory = None
-            self.q = None
+            self.context = None
 
             logger.log('Building Model Parameters', 1, self.__init__.__name__)
 
-            self.gruEncoder = tf.keras.layers.GRUCell(self.encoderStateSize)
-            self.gruEncoder.build(input_shape=(self.inputDimension,))
+            self.gruInput = tf.keras.layers.GRUCell(self.embeddingSize)
+            self.gruInput.build(input_shape=(self.inputDimension,))
 
-            self.lstm = tf.keras.layers.LSTMCell(self.lstmStateSize)
-            self.lstm.build(input_shape=(self.inputDimension,))
+            self.gruMemory = tf.keras.layers.GRUCell(self.embeddingSize)
+            self.gruMemory.build(input_shape=(self.inputDimension,))
 
-            self.W = tf.Variable(tf.random.normal((1, self.lstmStateSize), dtype=tf.float64))
-            self.A = tf.Variable(
-                tf.random.normal((self.encoderStateSize, self.lstmStateSize), dtype=tf.float64)
-            )
+            self.gruContext = tf.keras.layers.GRUCell(self.contextSize)
+            self.gruContext.build(input_shape=(self.inputDimension,))
 
-            self.b = tf.Variable(0, dtype=tf.float64)
+            finalWeightSize = self.embeddingSize + self.contextSize * self.memorySize
+            self.W = tf.Variable(tf.random.normal((1, finalWeightSize), dtype=tf.float64))
 
             logger.close()
 
@@ -194,15 +193,14 @@ class ExtremeTime(UnivariateModel):
         X = self.preparePredictData(targetSeries, exogenousSeries, logger)
 
         n = X.shape[0]
-        lstmStateList = self.getInitialLstmStates()
+        state = self.getInitialState()
         Ypred = [None] * n
 
-        logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
-                   self.trainSequence.__name__)
+        logger.log(f'state shape: {state.shape}', 2, self.trainSequence.__name__)
 
         for t in range(n):
-            Ypred[t], lstmStateList = \
-                self.predictTimestep(lstmStateList, X, t, logger)
+            Ypred[t], state = \
+                self.predictTimestep(state, X, t, logger)
 
         Ypred = np.array(Ypred)
         logger.log(f'Output Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
@@ -250,7 +248,7 @@ class ExtremeTime(UnivariateModel):
             logger.log(
                 f'Exogenous Series Shape: {exogenousSeries.shape}',
                 2,
-                self.evaluate.__name.__
+                self.evaluate.__name__
             )
             assert (exogenousSeries.shape[0] == n)
 
@@ -286,7 +284,7 @@ class ExtremeTime(UnivariateModel):
 
         logger = FileLogger(logPath, logLevel)
 
-        assert(self.memory is not None)
+        assert (self.memory is not None)
         logger.log(f'Memory Shape: {self.memory.shape}', 2, self.save.__name__)
 
         logger.log('Constructing Dictionary from model params', 1, self.save.__name__)
@@ -296,15 +294,14 @@ class ExtremeTime(UnivariateModel):
             'memorySize': self.memorySize,
             'windowSize': self.windowSize,
             'inputDimension': self.inputDimension,
-            'encoderStateSize': self.encoderStateSize,
-            'lstmStateSize': self.lstmStateSize,
+            'embeddingSize': self.embeddingSize,
+            'contextSize': self.contextSize,
             'memory': self.memory,
-            'q': self.q,
-            'gruEncoder': self.gruEncoder.get_weights(),
-            'lstm': self.lstm.get_weights(),
-            'W': self.W.read_value(),
-            'A': self.A.read_value(),
-            'b': self.b.read_value()
+            'context': self.context,
+            'gruInput': self.gruInput.get_weights(),
+            'gruMemory': self.gruMemory.get_weights(),
+            'gruContext': self.gruContext.get_weights(),
+            'W': self.W.read_value()
         }
 
         logger.log('Saving Dictionary', 1, self.save.__name__)
@@ -344,22 +341,24 @@ class ExtremeTime(UnivariateModel):
         self.memorySize = saveDict['memorySize']
         self.windowSize = saveDict['windowSize']
         self.inputDimension = saveDict['inputDimension']
-        self.encoderStateSize = saveDict['encoderStateSize']
-        self.lstmStateSize = saveDict['lstmStateSize']
+        self.embeddingSize = saveDict['embeddingSize']
+        self.contextSize = saveDict['contextSize']
         self.memory = saveDict['memory']
-        self.q = saveDict['q']
+        self.context = saveDict['context']
 
-        self.gruEncoder = tf.keras.layers.GRUCell(units=self.encoderStateSize)
-        self.gruEncoder.build(input_shape=(self.inputDimension,))
-        self.gruEncoder.set_weights(saveDict['gruEncoder'])
+        self.gruInput = tf.keras.layers.GRUCell(units=self.embeddingSize)
+        self.gruInput.build(input_shape=(self.inputDimension,))
+        self.gruInput.set_weights(saveDict['gruInput'])
 
-        self.lstm = tf.keras.layers.LSTMCell(units=self.encoderStateSize)
-        self.lstm.build(input_shape=(self.inputDimension,))
-        self.lstm.set_weights(saveDict['lstm'])
+        self.gruMemory = tf.keras.layers.GRUCell(units=self.embeddingSize)
+        self.gruMemory.build(input_shape=(self.inputDimension,))
+        self.gruMemory.set_weights(saveDict['gruMemory'])
+
+        self.gruContext = tf.keras.layers.GRUCell(units=self.contextSize)
+        self.gruContext.build(input_shape=(self.inputDimension,))
+        self.gruContext.set_weights(saveDict['gruContext'])
 
         self.W = tf.Variable(saveDict['W'])
-        self.A = tf.Variable(saveDict['A'])
-        self.b = tf.Variable(saveDict['b'])
 
     def preparePredictData(self, targetSeries, exogenousSeries, logger):
         """
@@ -391,16 +390,16 @@ class ExtremeTime(UnivariateModel):
             assert (exogenousSeries is not None)
 
             logger.log(f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.preparePredictData.__name__)
-            assert (exogenousSeries.shape[0] == targetSeries.shape[0])
+            assert (exogenousSeries.shape[0] == n)
             assert (exogenousSeries.shape[1] == self.inputDimension - 1)
 
             X = np.concatenate(
-                [exogenousSeries, np.expand_dims(targetSeries[:n], axis=1)],
+                [exogenousSeries, np.expand_dims(targetSeries, axis=1)],
                 axis=1
             )
         else:
             assert (exogenousSeries is None)
-            X = np.expand_dims(targetSeries[:n], axis=1)
+            X = np.expand_dims(targetSeries, axis=1)
 
         return X
 
@@ -434,7 +433,7 @@ class ExtremeTime(UnivariateModel):
             assert (exogenousSeries is not None)
 
             logger.log(f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.prepareData.__name__)
-            assert (self.forecastHorizon + exogenousSeries.shape[0] == targetSeries.shape[0])
+            assert (exogenousSeries.shape[0] == trainLength)
             assert (exogenousSeries.shape[1] == self.inputDimension - 1)
 
             X = np.concatenate(
@@ -469,14 +468,13 @@ class ExtremeTime(UnivariateModel):
 
         with tf.GradientTape() as tape:
             self.buildMemory(X, Y, seqStartTime, logger)
-            lstmStateList = self.getInitialLstmStates()
+            state = self.getInitialState()
 
-            logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
-                       self.trainSequence.__name__)
+            logger.log(f'state shape: {state.shape}', 2, self.trainSequence.__name__)
 
             Ypred = []
             for t in range(seqStartTime, seqEndTime + 1):
-                pred, lstmStateList = self.predictTimestep(lstmStateList, X, t, logger)
+                pred, state = self.predictTimestep(state, X, t, logger)
                 Ypred.append(pred)
 
             Ypred = tf.convert_to_tensor(Ypred, dtype=tf.float64)
@@ -488,14 +486,16 @@ class ExtremeTime(UnivariateModel):
             )
             logger.log(f'Loss: {loss}', 2, self.trainSequence.__name__)
 
-        trainableVars = self.gruEncoder.trainable_variables \
-            + self.lstm.trainable_variables \
-            + [self.W, self.A, self.b]
+        trainableVars = \
+            self.gruInput.trainable_variables \
+            + self.gruMemory.trainable_variables \
+            + self.gruContext.trainable_variables \
+            + [self.W]
 
         logger.log('Performing Gradient Descent', 1, self.trainSequence.__name__)
 
         grads = tape.gradient(loss, trainableVars)
-        assert(len(trainableVars) == len(grads))
+        assert (len(trainableVars) == len(grads))
 
         optimizer.apply_gradients(zip(
             grads,
@@ -518,13 +518,13 @@ class ExtremeTime(UnivariateModel):
 
         logger.log(f'Building Memory', 1, self.buildMemory.__name__)
         logger.log(f'Current Time: {currentTime}', 2, self.buildMemory.__name__)
-        assert(currentTime >= self.windowSize)
+        assert (currentTime >= self.windowSize)
 
         sampleLow = 0
         sampleHigh = currentTime - self.windowSize
 
         self.memory = [None] * self.memorySize
-        self.q = [None] * self.memorySize
+        self.context = [None] * self.memorySize
 
         for i in range(self.memorySize):
             windowStartTime = np.random.randint(
@@ -532,13 +532,16 @@ class ExtremeTime(UnivariateModel):
                 sampleHigh + 1
             )
 
-            self.memory[i] = self.runGruOnWindow(X, windowStartTime, logger)
-            self.q[i] = Y[windowStartTime + self.windowSize - 1]
+            self.memory[i], self.context[i] = self.runGruOnWindow(X, windowStartTime, logger)
 
         self.memory = tf.stack(self.memory)
-        self.q = tf.convert_to_tensor(self.q, dtype=tf.float64)
+        self.context = tf.stack(self.context)
 
-        logger.log(f'Memory Shape: {self.memory.shape}, Out Shape: {self.q.shape}', 2, self.buildMemory.__name__)
+        logger.log(
+            f'Memory Shape: {self.memory.shape}, Context Shape: {self.context.shape}',
+            2,
+            self.buildMemory.__name__
+        )
 
     def runGruOnWindow(self, X, windowStartTime, logger):
         """
@@ -552,72 +555,78 @@ class ExtremeTime(UnivariateModel):
 
         logger.log(f'Window Start Time: {windowStartTime}', 2, self.runGruOnWindow.__name__)
 
-        gruState = self.getInitialGruEncoderState()
+        gruMemoryState, gruContextState = self.getInitialEncoderStates()
 
         for t in range(
                 windowStartTime,
                 windowStartTime + self.windowSize
         ):
-            gruState, _ = self.gruEncoder(
+            gruMemoryState, _ = self.gruMemory(
                 np.expand_dims(X[t], 0),
-                gruState
+                gruMemoryState
             )
 
-        finalState = tf.squeeze(gruState)
-        logger.log(f'GRU final state shape: {finalState.shape}', 2, self.runGruOnWindow.__name__)
+            gruContextState, _ = self.gruContext(
+                np.expand_dims(X[t], 0),
+                gruContextState
+            )
 
-        return finalState
+        gruMemoryState = tf.squeeze(gruMemoryState, axis=0)
+        gruContextState = tf.squeeze(gruContextState, axis=0)
 
-    def predictTimestep(self, lstmStateList, X, currentTime, logger):
+        logger.log(
+            f'GRU memory state shape: {gruMemoryState.shape},'
+            + f' context state shape: {gruContextState.shape}',
+            2,
+            self.runGruOnWindow.__name__
+        )
+
+        return gruMemoryState, gruContextState
+
+    def predictTimestep(self, state, X, currentTime, logger):
         """
         Predict on a Single Timestep
 
-        :param lstmStateList: List of the current two states the LSTM requires
+        :param state: State of Input GRU
         :param X: Features, has shape (n, self.inputShape)
         :param currentTime: Current Timestep
         :param logger: The logger which would be used to log information
-        :return: The predicted value on current timestep
+        :return: The predicted value on current timestep and the next state
         """
 
-        logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
-                   self.predictTimestep.__name__)
+        logger.log(f'state shape: {state.shape}', 2, self.predictTimestep.__name__)
 
-        [lstmHiddenState, lstmCellState] = self.lstm(
+        state, _ = self.gruInput(
             np.expand_dims(X[currentTime], axis=0),
-            lstmStateList
-        )[1]
+            state
+        )
 
-        embedding = tf.squeeze(tf.matmul(
-            self.A,
-            tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
-        ))
-        logger.log(f'Embedding Shape: {embedding.shape}', 2, self.predictTimestep.__name__)
+        embedding = tf.squeeze(state)
 
         attentionWeights = self.computeAttention(embedding)
         logger.log(f'Attention Shape: {attentionWeights.shape}', 2, self.predictTimestep.__name__)
 
-        o1 = tf.squeeze(tf.matmul(
-            self.W,
-            tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
-        ))
-        logger.log(f'Output1: {o1}', 2, self.predictTimestep.__name__)
+        weightedContext = \
+            tf.expand_dims(attentionWeights, axis=1) * self.context
 
-        o2 = tf.reduce_sum(attentionWeights * self.q)
-        logger.log(f'Output2: {o2}', 2, self.predictTimestep.__name__)
+        concatVector = tf.concat([
+            tf.expand_dims(embedding, axis=1),
+            tf.reshape(weightedContext, (tf.size(weightedContext), 1))
+        ], axis=0)
 
-        bSigmoid = tf.nn.sigmoid(self.b)
-        pred = bSigmoid * o1 + (1 - bSigmoid) * o2
+        logger.log(f'Concat Vector Shape: {concatVector.shape}', 2, self.predictTimestep.__name__)
 
+        pred = tf.squeeze(tf.matmul(self.W, concatVector))
         logger.log(f'Prediction: {pred}', 2, self.predictTimestep.__name__)
 
-        return pred, [lstmHiddenState, lstmCellState]
+        return pred, state
 
     def computeAttention(self, embedding):
         """
         Computes Attention Weights by taking softmax of the inner product
         between embedding of the input and the memory states
 
-        :param embedding: Embedding of the input
+        :param embedding: Embedding of the input, it has shape (self.embeddingSize,)
         :return: Attention Weight Values
         """
 
@@ -626,26 +635,30 @@ class ExtremeTime(UnivariateModel):
             tf.expand_dims(embedding, axis=1)
         )))
 
-    def getInitialLstmStates(self):
+    def getInitialState(self):
         """
-        Computes Initial LSTM States (i.e. both of the initial states)
+        Computes Initial Input GRU's State
 
-        :return: Initial LSTM State List
+        :return: Initial Input GRU's State
         """
 
-        return self.lstm.get_initial_state(
+        return self.gruInput.get_initial_state(
             batch_size=1,
             dtype=tf.float64
         )
 
-    def getInitialGruEncoderState(self):
+    def getInitialEncoderStates(self):
         """
         Computes Initial GRU Encoder State
 
         :return: Initial GRU State
         """
 
-        return self.gruEncoder.get_initial_state(
-            batch_size=1,
-            dtype=tf.float64
-        )
+        return \
+            self.gruMemory.get_initial_state(
+                batch_size=1,
+                dtype=tf.float64
+            ), self.gruContext.get_initial_state(
+                batch_size=1,
+                dtype=tf.float64
+            )
