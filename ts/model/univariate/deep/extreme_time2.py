@@ -121,7 +121,7 @@ class ExtremeTime2(UnivariateModel):
                 seqEndTime = min(seqStartTime + sequenceLength, n - 1)
 
                 startTime = time.time()
-                loss = self.trainSequence(X, Y, seqStartTime, seqEndTime, optimizer, logger)
+                loss = self.trainSequence(X, Y, seqStartTime, seqEndTime, optimizer)
                 endTime = time.time()
                 timeTaken = endTime - startTime
 
@@ -139,7 +139,7 @@ class ExtremeTime2(UnivariateModel):
 
                 seqStartTime += sequenceLength
 
-        self.buildMemory(X, Y, n, logger)
+        self.buildMemory(X, n)
 
         if returnLosses:
             return np.array(losses)
@@ -164,7 +164,7 @@ class ExtremeTime2(UnivariateModel):
         logger = GlobalLogger.getLogger()
         logger.log('Begin Prediction', 1, self.trainSequence.__name__)
 
-        X = self.preparePredictData(targetSeries, exogenousSeries, logger)
+        X = self.preparePredictData(targetSeries, exogenousSeries)
 
         n = X.shape[0]
         state = self.getInitialState()
@@ -415,7 +415,7 @@ class ExtremeTime2(UnivariateModel):
         logger.log(f'Sequence start: {seqStartTime}, Sequence end: {seqEndTime}', 2, self.trainSequence.__name__)
 
         with tf.GradientTape() as tape:
-            self.buildMemory(X, Y, seqStartTime, logger)
+            self.buildMemory(X, seqStartTime)
             state = self.getInitialState()
 
             logger.log(f'state shape: {state.shape}', 2, self.trainSequence.__name__)
@@ -452,11 +452,10 @@ class ExtremeTime2(UnivariateModel):
 
         return loss
 
-    def buildMemory(self, X, Y, currentTime):
+    def buildMemory(self, X, currentTime):
         """
         Build Model Memory using the timesteps seen up till now
         :param X: Features, has shape (n, self.inputShape)
-        :param Y: Targets, has shape (n,)
         :param currentTime: current timestep, memory would be built only using the
         timestep earlier than the current timestep
         :return: None
