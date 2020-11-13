@@ -10,8 +10,6 @@ class UnivariateModel:
             exogenousSeries=None,
             modelSavePath=None,
             verboseLevel=1,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1,
             returnLosses=True
     ):
         """
@@ -28,9 +26,6 @@ class UnivariateModel:
         each training an a sequence, if None then parameters are not saved
         :param verboseLevel: Verbose level, 0 is nothing, greater values increases
         the information printed to the console
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :param returnLosses: If True, then losses are returned, else losses are not
         returned
         :return: If returnLosses is True, then numpy array of losses of shape (numSeq,)
@@ -41,9 +36,7 @@ class UnivariateModel:
     def predict(
             self,
             targetSeries,
-            exogenousSeries=None,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            exogenousSeries=None
     ):
         """
         Forecast using the model parameters on the provided input data
@@ -54,9 +47,6 @@ class UnivariateModel:
         numpy array of shape (n, self.numExoVariables), it can be None only if
         self.numExoVariables is 0 in which case the exogenous variables are not
         considered
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :return: Forecast targets predicted by the model, it has shape (n,), the
         horizon of the targets is the same as self.forecastHorizon
         """
@@ -66,8 +56,6 @@ class UnivariateModel:
             self,
             targetSeries,
             exogenousSeries=None,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1,
             returnPred=False
     ):
         """
@@ -83,9 +71,6 @@ class UnivariateModel:
         numpy array of shape (numTimesteps, self.numExoVariables), it can be None
         only if self.numExoVariables is 0 in which case the exogenous variables
         are not considered
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :param returnPred: If True, then return predictions along with loss, else
         return on loss
         :return: If True, then return predictions along with loss of the predicted
@@ -95,34 +80,24 @@ class UnivariateModel:
 
     def save(
             self,
-            modelSavePath,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            modelSavePath
     ):
         """
         Save the model parameters at the provided path
 
         :param modelSavePath: Path where the parameters are to be saved
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :return: None
         """
         pass
 
     def load(
             self,
-            modelLoadPath,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            modelLoadPath
     ):
         """
         Load the model parameters from the provided path
 
         :param modelLoadPath: Path from where the parameters are to be loaded
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :return: None
         """
         pass
