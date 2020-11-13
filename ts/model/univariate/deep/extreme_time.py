@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 
 from ts.model.univariate.univariate import UnivariateModel
-from ts.log import DEFAULT_LOG_PATH, FileLogger, ConsoleLogger
+from ts.log import GlobalLogger, ConsoleLogger
 
 
 class ExtremeTime(UnivariateModel):
@@ -18,9 +18,7 @@ class ExtremeTime(UnivariateModel):
             encoderStateSize=10,
             lstmStateSize=10,
             numExoVariables=0,
-            modelLoadPath=None,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            modelLoadPath=None
     ):
         """
         Initialize the model parameters and hyperparameters
@@ -36,17 +34,14 @@ class ExtremeTime(UnivariateModel):
         :param numExoVariables: Number of exogenous variables to be used for training
         :param modelLoadPath: If specified, then all provided parameters (except logging)
         are ignored, and the model is loaded from the path
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         """
 
         tf.keras.backend.set_floatx('float64')
 
         if modelLoadPath is not None:
-            self.load(modelLoadPath, logPath, logLevel)
+            self.load(modelLoadPath)
         else:
-            logger = FileLogger(logPath, logLevel)
+            logger = GlobalLogger.getLogger()
             logger.log('Initializing Members', 1, self.__init__.__name__)
 
             self.forecastHorizon = forecastHorizon
@@ -73,8 +68,6 @@ class ExtremeTime(UnivariateModel):
 
             self.b = tf.Variable(0, dtype=tf.float64)
 
-            logger.close()
-
     def train(
             self,
             targetSeries,
@@ -83,8 +76,6 @@ class ExtremeTime(UnivariateModel):
             optimizer=tf.optimizers.Adam(),
             modelSavePath=None,
             verboseLevel=1,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1,
             returnLosses=True,
             numIterations=1
     ):
@@ -103,9 +94,6 @@ class ExtremeTime(UnivariateModel):
         each training an a sequence, if None then parameters are not saved
         :param verboseLevel: Verbose level, 0 is nothing, greater values increases
         the information printed to the console
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :param returnLosses: If True, then losses are returned, else losses are not
         returned
         :param numIterations: Number of iterations of training to be performed
@@ -113,10 +101,10 @@ class ExtremeTime(UnivariateModel):
         is returned, else None is returned
         """
 
-        logger = FileLogger(logPath, logLevel)
+        logger = GlobalLogger.getLogger()
         verbose = ConsoleLogger(verboseLevel)
 
-        X, Y = self.prepareData(targetSeries, exogenousSeries, logger)
+        X, Y = self.prepareData(targetSeries, exogenousSeries)
 
         n = X.shape[0]
         logger.log(f'Seq Start Time: {self.windowSize}, Train len: {n}', 2, self.train.__name__)
@@ -124,8 +112,7 @@ class ExtremeTime(UnivariateModel):
 
         logger.log('Begin Training', 1, self.train.__name__)
 
-        if returnLosses:
-            losses = []
+        losses = []
 
         for iteration in range(numIterations):
 
@@ -137,7 +124,7 @@ class ExtremeTime(UnivariateModel):
                 seqEndTime = min(seqStartTime + sequenceLength, n - 1)
 
                 startTime = time.time()
-                loss = self.trainSequence(X, Y, seqStartTime, seqEndTime, optimizer, logger)
+                loss = self.trainSequence(X, Y, seqStartTime, seqEndTime, optimizer)
                 endTime = time.time()
                 timeTaken = endTime - startTime
 
@@ -151,16 +138,12 @@ class ExtremeTime(UnivariateModel):
 
                 if modelSavePath is not None:
                     logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
-                    logger.close()
 
-                    self.save(modelSavePath, logPath, logLevel)
-
-                    logger = FileLogger(logPath, logLevel)
+                    self.save(modelSavePath)
 
                 seqStartTime += sequenceLength
 
-        self.buildMemory(X, Y, n, logger)
-        logger.close()
+        self.buildMemory(X, Y, n)
 
         if returnLosses:
             return np.array(losses)
@@ -169,8 +152,6 @@ class ExtremeTime(UnivariateModel):
             self,
             targetSeries,
             exogenousSeries=None,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1
     ):
         """
         Forecast using the model parameters on the provided input data
@@ -181,17 +162,14 @@ class ExtremeTime(UnivariateModel):
         numpy array of shape (n, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not
         considered
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :return: Forecast targets predicted by the model, it has shape (n,), the
         horizon of the targets is the same as self.forecastHorizon
         """
 
-        logger = FileLogger(logPath, logLevel)
+        logger = GlobalLogger.getLogger()
         logger.log('Begin Prediction', 1, self.trainSequence.__name__)
 
-        X = self.preparePredictData(targetSeries, exogenousSeries, logger)
+        X = self.preparePredictData(targetSeries, exogenousSeries)
 
         n = X.shape[0]
         lstmStateList = self.getInitialLstmStates()
@@ -202,7 +180,7 @@ class ExtremeTime(UnivariateModel):
 
         for t in range(n):
             Ypred[t], lstmStateList = \
-                self.predictTimestep(lstmStateList, X, t, logger)
+                self.predictTimestep(lstmStateList, X, t)
 
         Ypred = np.array(Ypred)
         logger.log(f'Output Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
@@ -213,8 +191,6 @@ class ExtremeTime(UnivariateModel):
             self,
             targetSeries,
             exogenousSeries=None,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1,
             returnPred=False
     ):
         """
@@ -230,16 +206,13 @@ class ExtremeTime(UnivariateModel):
         numpy array of shape (numTimesteps, numExoVariables), it can be None
         only if numExoVariables is 0 in which case the exogenous variables
         are not considered
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :param returnPred: If True, then return predictions along with loss, else
         return on loss
         :return: If True, then return predictions along with loss of the predicted
         and true targets, else return only loss
         """
 
-        logger = FileLogger(logPath, logLevel)
+        logger = GlobalLogger.getLogger()
         logger.log('Begin Evaluating', 1, self.evaluate.__name__)
 
         n = targetSeries.shape[0] - self.forecastHorizon
@@ -250,18 +223,15 @@ class ExtremeTime(UnivariateModel):
             logger.log(
                 f'Exogenous Series Shape: {exogenousSeries.shape}',
                 2,
-                self.evaluate.__name.__
+                self.evaluate.__name__
             )
             assert (exogenousSeries.shape[0] == n)
 
-        logger.close()
-        Ypred = self.predict(targetSeries[:n], exogenousSeries, logPath, logLevel)
+        Ypred = self.predict(targetSeries[:n], exogenousSeries)
 
         loss = tf.keras.losses.MSE(targetSeries[self.forecastHorizon:], Ypred)
 
-        logger = FileLogger(logPath, logLevel)
         logger.log(f'Computed Loss: {loss}', 2, self.evaluate.__name__)
-        logger.close()
 
         if returnPred:
             return loss, Ypred
@@ -270,23 +240,18 @@ class ExtremeTime(UnivariateModel):
 
     def save(
             self,
-            modelSavePath,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            modelSavePath
     ):
         """
         Save the model parameters at the provided path
 
         :param modelSavePath: Path where the parameters are to be saved
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :return: None
         """
 
-        logger = FileLogger(logPath, logLevel)
+        logger = GlobalLogger.getLogger()
 
-        assert(self.memory is not None)
+        assert (self.memory is not None)
         logger.log(f'Memory Shape: {self.memory.shape}', 2, self.save.__name__)
 
         logger.log('Constructing Dictionary from model params', 1, self.save.__name__)
@@ -313,25 +278,18 @@ class ExtremeTime(UnivariateModel):
         pickle.dump(saveDict, fl)
         fl.close()
 
-        logger.close()
-
     def load(
             self,
-            modelLoadPath,
-            logPath=DEFAULT_LOG_PATH,
-            logLevel=1
+            modelLoadPath
     ):
         """
         Load the model parameters from the provided path
 
         :param modelLoadPath: Path from where the parameters are to be loaded
-        :param logPath: Path where to log the information
-        :param logLevel: Logging level, 0 means no logging, greater values indicate
-        more information
         :return: None
         """
 
-        logger = FileLogger(logPath, logLevel)
+        logger = GlobalLogger.getLogger()
         logger.log('Load Dictionary from Model Params file', 1, self.load.__name__)
 
         fl = open(modelLoadPath, 'rb')
@@ -361,7 +319,7 @@ class ExtremeTime(UnivariateModel):
         self.A = tf.Variable(saveDict['A'])
         self.b = tf.Variable(saveDict['b'])
 
-    def preparePredictData(self, targetSeries, exogenousSeries, logger):
+    def preparePredictData(self, targetSeries, exogenousSeries):
         """
         Prepare the data for training
 
@@ -371,11 +329,12 @@ class ExtremeTime(UnivariateModel):
         numpy array of shape (n, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not
         considered
-        :param logger: The logger which would be used to log information
         :return: prepared feature data X, X has shape (n, numExoVariables + 1), X can
         also be said to have shape (n, self.inputShape) since
         self.inputShape = numExoVariables + 1s
         """
+
+        logger = GlobalLogger.getLogger()
 
         logger.log('Begin preparing data', 1, self.preparePredictData.__name__)
         logger.log(f'Target Series Shape: {targetSeries.shape}', 2, self.preparePredictData.__name__)
@@ -404,7 +363,7 @@ class ExtremeTime(UnivariateModel):
 
         return X
 
-    def prepareData(self, targetSeries, exogenousSeries, logger):
+    def prepareData(self, targetSeries, exogenousSeries):
         """
         Prepare the data for training
 
@@ -414,11 +373,12 @@ class ExtremeTime(UnivariateModel):
         numpy array of shape (n, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not
         considered
-        :param logger: The logger which would be used to log information
         :return: prepared data X, Y as features and targets, X has shape
         (n, numExoVariables + 1), Y has shape (n,). X can also be said to have
         shape (n, self.inputShape) since self.inputShape = numExoVariables + 1s
         """
+
+        logger = GlobalLogger.getLogger()
 
         logger.log('Begin preparing data', 1, self.prepareData.__name__)
         logger.log(f'Target Series Shape: {targetSeries.shape}', 2, self.prepareData.__name__)
@@ -452,7 +412,7 @@ class ExtremeTime(UnivariateModel):
 
         return X, Y
 
-    def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer, logger):
+    def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
         """
 
         :param X: Features, has shape (n, self.inputShape)
@@ -460,15 +420,16 @@ class ExtremeTime(UnivariateModel):
         :param seqStartTime: Sequence Start Time
         :param seqEndTime: Sequence End Time
         :param optimizer: The optimization algorithm
-        :param logger: The logger which would be used to log information
         :return: The loss value resulted from training on the sequence
         """
+
+        logger = GlobalLogger.getLogger()
 
         logger.log('Begin Training on Sequence', 1, self.trainSequence.__name__)
         logger.log(f'Sequence start: {seqStartTime}, Sequence end: {seqEndTime}', 2, self.trainSequence.__name__)
 
         with tf.GradientTape() as tape:
-            self.buildMemory(X, Y, seqStartTime, logger)
+            self.buildMemory(X, Y, seqStartTime)
             lstmStateList = self.getInitialLstmStates()
 
             logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
@@ -476,7 +437,7 @@ class ExtremeTime(UnivariateModel):
 
             Ypred = []
             for t in range(seqStartTime, seqEndTime + 1):
-                pred, lstmStateList = self.predictTimestep(lstmStateList, X, t, logger)
+                pred, lstmStateList = self.predictTimestep(lstmStateList, X, t)
                 Ypred.append(pred)
 
             Ypred = tf.convert_to_tensor(Ypred, dtype=tf.float64)
@@ -488,14 +449,15 @@ class ExtremeTime(UnivariateModel):
             )
             logger.log(f'Loss: {loss}', 2, self.trainSequence.__name__)
 
-        trainableVars = self.gruEncoder.trainable_variables \
+        trainableVars = \
+            self.gruEncoder.trainable_variables \
             + self.lstm.trainable_variables \
             + [self.W, self.A, self.b]
 
         logger.log('Performing Gradient Descent', 1, self.trainSequence.__name__)
 
         grads = tape.gradient(loss, trainableVars)
-        assert(len(trainableVars) == len(grads))
+        assert (len(trainableVars) == len(grads))
 
         optimizer.apply_gradients(zip(
             grads,
@@ -504,7 +466,7 @@ class ExtremeTime(UnivariateModel):
 
         return loss
 
-    def buildMemory(self, X, Y, currentTime, logger):
+    def buildMemory(self, X, Y, currentTime):
         """
         Build Model Memory using the timesteps seen up till now
 
@@ -512,13 +474,14 @@ class ExtremeTime(UnivariateModel):
         :param Y: Targets, has shape (n,)
         :param currentTime: current timestep, memory would be built only using the
         timestep earlier than the current timestep
-        :param logger: The logger which would be used to log information
         :return: None
         """
 
+        logger = GlobalLogger.getLogger()
+
         logger.log(f'Building Memory', 1, self.buildMemory.__name__)
         logger.log(f'Current Time: {currentTime}', 2, self.buildMemory.__name__)
-        assert(currentTime >= self.windowSize)
+        assert (currentTime >= self.windowSize)
 
         sampleLow = 0
         sampleHigh = currentTime - self.windowSize
@@ -532,7 +495,7 @@ class ExtremeTime(UnivariateModel):
                 sampleHigh + 1
             )
 
-            self.memory[i] = self.runGruOnWindow(X, windowStartTime, logger)
+            self.memory[i] = self.runGruOnWindow(X, windowStartTime)
             self.q[i] = Y[windowStartTime + self.windowSize - 1]
 
         self.memory = tf.stack(self.memory)
@@ -540,16 +503,16 @@ class ExtremeTime(UnivariateModel):
 
         logger.log(f'Memory Shape: {self.memory.shape}, Out Shape: {self.q.shape}', 2, self.buildMemory.__name__)
 
-    def runGruOnWindow(self, X, windowStartTime, logger):
+    def runGruOnWindow(self, X, windowStartTime):
         """
         Runs GRU on the window and returns the final state
 
         :param X: Features, has shape (n, self.inputShape)
         :param windowStartTime: Starting timestep of the window
-        :param logger: The logger which would be used to log information
         :return: The final state after running on the window, it has shape (self.encoderStateSize,)
         """
 
+        logger = GlobalLogger.getLogger()
         logger.log(f'Window Start Time: {windowStartTime}', 2, self.runGruOnWindow.__name__)
 
         gruState = self.getInitialGruEncoderState()
@@ -568,17 +531,17 @@ class ExtremeTime(UnivariateModel):
 
         return finalState
 
-    def predictTimestep(self, lstmStateList, X, currentTime, logger):
+    def predictTimestep(self, lstmStateList, X, currentTime):
         """
         Predict on a Single Timestep
 
         :param lstmStateList: List of the current two states the LSTM requires
         :param X: Features, has shape (n, self.inputShape)
         :param currentTime: Current Timestep
-        :param logger: The logger which would be used to log information
         :return: The predicted value on current timestep
         """
 
+        logger = GlobalLogger.getLogger()
         logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
                    self.predictTimestep.__name__)
 
