@@ -4,6 +4,7 @@ import time
 import tensorflow as tf
 import numpy as np
 
+from ts.utility import Utility
 from ts.log import GlobalLogger, ConsoleLogger
 
 
@@ -100,7 +101,8 @@ class ExtremeTime2:
         logger = GlobalLogger.getLogger()
         verbose = ConsoleLogger(verboseLevel)
 
-        X, Y = self.prepareData(targetSeries, exogenousSeries)
+        X, Y = Utility.prepareDataTrain(targetSeries, exogenousSeries, self.forecastHorizon)
+        assert (Utility.isExoShapeValid(exogenousSeries, self.inputDimension - 1))
 
         n = X.shape[0]
         logger.log(f'Seq Start Time: {self.windowSize}, Train len: {n}', 2, self.train.__name__)
@@ -163,7 +165,8 @@ class ExtremeTime2:
         logger = GlobalLogger.getLogger()
         logger.log('Begin Prediction', 1, self.trainSequence.__name__)
 
-        X = self.preparePredictData(targetSeries, exogenousSeries)
+        X = Utility.prepareDataPred(targetSeries, exogenousSeries)
+        assert (Utility.isExoShapeValid(exogenousSeries, self.inputDimension - 1))
 
         n = X.shape[0]
         state = self.getInitialState()
@@ -309,95 +312,6 @@ class ExtremeTime2:
         self.gruContext.set_weights(saveDict['gruContext'])
 
         self.W = tf.Variable(saveDict['W'])
-
-    def preparePredictData(self, targetSeries, exogenousSeries):
-        """
-        Prepare the data for training
-        :param targetSeries: Univariate Series of the Target Variable, it
-        should be a numpy array of shape (n,)
-        :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (n, numExoVariables), it can be None only if
-        numExoVariables is 0 in which case the exogenous variables are not
-        considered
-        :return: prepared feature data X, X has shape (n, numExoVariables + 1), X can
-        also be said to have shape (n, self.inputShape) since
-        self.inputShape = numExoVariables + 1s
-        """
-
-        logger = GlobalLogger.getLogger()
-        logger.log('Begin preparing data', 1, self.preparePredictData.__name__)
-        logger.log(f'Target Series Shape: {targetSeries.shape}', 2, self.preparePredictData.__name__)
-        assert (len(targetSeries.shape) == 1)
-
-        n = targetSeries.shape[0]
-
-        logger.log(f'Length: {n}', 2, self.preparePredictData.__name__)
-        assert (n > 0)
-
-        logger.log(f'Exogenous Series: {exogenousSeries}', 2, self.preparePredictData.__name__)
-        if self.inputDimension > 1:
-            assert (exogenousSeries is not None)
-
-            logger.log(f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.preparePredictData.__name__)
-            assert (exogenousSeries.shape[0] == n)
-            assert (exogenousSeries.shape[1] == self.inputDimension - 1)
-
-            X = np.concatenate(
-                [exogenousSeries, np.expand_dims(targetSeries, axis=1)],
-                axis=1
-            )
-        else:
-            assert (exogenousSeries is None)
-            X = np.expand_dims(targetSeries, axis=1)
-
-        return X
-
-    def prepareData(self, targetSeries, exogenousSeries):
-        """
-        Prepare the data for training
-        :param targetSeries: Univariate Series of the Target Variable, it
-        should be a numpy array of shape (n + self.forecastHorizon,)
-        :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (n, numExoVariables), it can be None only if
-        numExoVariables is 0 in which case the exogenous variables are not
-        considered
-        :return: prepared data X, Y as features and targets, X has shape
-        (n, numExoVariables + 1), Y has shape (n,). X can also be said to have
-        shape (n, self.inputShape) since self.inputShape = numExoVariables + 1s
-        """
-
-        logger = GlobalLogger.getLogger()
-        logger.log('Begin preparing data', 1, self.prepareData.__name__)
-        logger.log(f'Target Series Shape: {targetSeries.shape}', 2, self.prepareData.__name__)
-        assert (len(targetSeries.shape) == 1)
-
-        trainLength = targetSeries.shape[0] - self.forecastHorizon
-
-        logger.log(f'Train Length: {trainLength}', 2, self.prepareData.__name__)
-        assert (trainLength > 0)
-
-        logger.log(f'Exogenous Series: {exogenousSeries}', 2, self.prepareData.__name__)
-        if self.inputDimension > 1:
-            assert (exogenousSeries is not None)
-
-            logger.log(f'Exogenous Series Shape: {exogenousSeries.shape}', 2, self.prepareData.__name__)
-            assert (exogenousSeries.shape[0] == trainLength)
-            assert (exogenousSeries.shape[1] == self.inputDimension - 1)
-
-            X = np.concatenate(
-                [exogenousSeries, np.expand_dims(targetSeries[:trainLength], axis=1)],
-                axis=1
-            )
-        else:
-            assert (exogenousSeries is None)
-            X = np.expand_dims(targetSeries[:trainLength], axis=1)
-
-        Y = targetSeries[self.forecastHorizon:]
-
-        logger.log(f'X shape: {X.shape}, Y shape: {Y.shape}', 2, self.prepareData.__name__)
-        assert (X.shape[0] == Y.shape[0])
-
-        return X, Y
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
         """
