@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import tensorflow as tf
 
@@ -41,11 +42,14 @@ def main():
     rnnForecast = RnnForecast(1, 10, 1, 0)
     trainSequences = Utility.breakSeq(train, 100)
 
+    modelSaveDir = os.path.expanduser('~/rnnModel')
     losses = rnnForecast.train(
         trainSequences,
         tf.optimizers.Adam(0.03),
-        numIterations=10
+        numIterations=10,
+        modelSavePath=modelSaveDir
     )
+
     Plot.plotLoss(losses)
 
     loss, Ypred = rnnForecast.evaluate(test, None, True)

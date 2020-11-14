@@ -6,13 +6,13 @@ from ts.utility import Utility, ForecastDataSequence
 from ts.log import GlobalLogger
 
 
-class RnnForecast:
+class GruForecast:
 
     def __init__(
             self,
             forecastHorizon=1,
             stateSize=10,
-            numRnnLayers=1,
+            numGruLayers=1,
             numExoVariables=0,
             modelLoadPath=None
     ):
@@ -28,8 +28,8 @@ class RnnForecast:
             self.forecastHorizon = forecastHorizon
             self.model = tf.keras.Sequential()
 
-            for i in range(numRnnLayers):
-                self.model.add(tf.keras.layers.SimpleRNN(
+            for i in range(numGruLayers):
+                self.model.add(tf.keras.layers.GRU(
                     stateSize,
                     return_sequences=True
                 ))
@@ -211,10 +211,10 @@ class RnnForecast:
 
 class SaveCallback(tf.keras.callbacks.Callback):
 
-    def __init__(self, rnnForecastModel, modelSavePath):
+    def __init__(self, gruForecastModel, modelSavePath):
         super().__init__()
-        self.rnnForecastModel = rnnForecastModel
+        self.gruForecastModel = gruForecastModel
         self.modelSavePath = modelSavePath
 
     def on_epoch_end(self, epoch, logs=None):
-        self.rnnForecastModel.save(self.modelSavePath)
+        self.gruForecastModel.save(self.modelSavePath)
