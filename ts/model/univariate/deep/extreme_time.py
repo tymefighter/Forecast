@@ -104,8 +104,8 @@ class ExtremeTime:
         logger = GlobalLogger.getLogger()
         verbose = ConsoleLogger(verboseLevel)
 
-        X, Y = Utility.prepareDataTrain(targetSeries, exogenousSeries, self.forecastHorizon)
         assert (Utility.isExoShapeValid(exogenousSeries, self.inputDimension - 1))
+        X, Y = Utility.prepareDataTrain(targetSeries, exogenousSeries, self.forecastHorizon)
 
         n = X.shape[0]
         logger.log(f'Seq Start Time: {self.windowSize}, Train len: {n}', 2, self.train.__name__)
@@ -170,24 +170,24 @@ class ExtremeTime:
         """
 
         logger = GlobalLogger.getLogger()
-        logger.log('Begin Prediction', 1, self.trainSequence.__name__)
+        logger.log('Begin Prediction', 1, self.predict.__name__)
 
-        X = Utility.prepareDataPred(targetSeries, exogenousSeries)
         assert (Utility.isExoShapeValid(exogenousSeries, self.inputDimension - 1))
+        X = Utility.prepareDataPred(targetSeries, exogenousSeries)
 
         n = X.shape[0]
         lstmStateList = self.getInitialLstmStates()
         Ypred = [None] * n
 
         logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
-                   self.trainSequence.__name__)
+                   self.predict.__name__)
 
         for t in range(n):
             Ypred[t], lstmStateList = \
                 self.predictTimestep(lstmStateList, X, t)
 
         Ypred = np.array(Ypred)
-        logger.log(f'Output Shape: {Ypred.shape}', 2, self.trainSequence.__name__)
+        logger.log(f'Output Shape: {Ypred.shape}', 2, self.predict.__name__)
 
         return Ypred
 
