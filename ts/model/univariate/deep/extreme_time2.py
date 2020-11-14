@@ -101,8 +101,8 @@ class ExtremeTime2:
         logger = GlobalLogger.getLogger()
         verbose = ConsoleLogger(verboseLevel)
 
-        X, Y = Utility.prepareDataTrain(targetSeries, exogenousSeries, self.forecastHorizon)
         assert (Utility.isExoShapeValid(exogenousSeries, self.inputDimension - 1))
+        X, Y = Utility.prepareDataTrain(targetSeries, exogenousSeries, self.forecastHorizon)
 
         n = X.shape[0]
         logger.log(f'Seq Start Time: {self.windowSize}, Train len: {n}', 2, self.train.__name__)
@@ -165,8 +165,8 @@ class ExtremeTime2:
         logger = GlobalLogger.getLogger()
         logger.log('Begin Prediction', 1, self.trainSequence.__name__)
 
-        X = Utility.prepareDataPred(targetSeries, exogenousSeries)
         assert (Utility.isExoShapeValid(exogenousSeries, self.inputDimension - 1))
+        X = Utility.prepareDataPred(targetSeries, exogenousSeries)
 
         n = X.shape[0]
         state = self.getInitialState()

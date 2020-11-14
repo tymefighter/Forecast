@@ -12,8 +12,8 @@ def simpleData(n):
     noiseGenFunc = np.random.normal
     noiseGenParams = (0.0, 1.0)
 
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams, logLevel=2) \
-        .generate(n, logLevel=2)
+    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
+        .generate(n)
 
 
 def prepareData(data, trainSize):
