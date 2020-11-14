@@ -87,9 +87,9 @@ class Utility:
         """
 
         assert (
-            exogenousSeries is None
-            or
-            (targetSeries.shape[0] == exogenousSeries.shape[0])
+                exogenousSeries is None
+                or
+                (targetSeries.shape[0] == exogenousSeries.shape[0])
         )
 
         if len(targetSeries.shape) == 1:
@@ -120,9 +120,9 @@ class Utility:
         assert (targetSeries.shape[0] > forecastHorizon)
 
         assert (
-            exogenousSeries is None
-            or
-            (targetSeries.shape[0] == exogenousSeries.shape[0] + forecastHorizon)
+                exogenousSeries is None
+                or
+                (targetSeries.shape[0] == exogenousSeries.shape[0] + forecastHorizon)
         )
 
         n = targetSeries.shape[0] - forecastHorizon
@@ -134,3 +134,14 @@ class Utility:
         assert (len(Y.shape) == len(targetSeries.shape))
 
         return X, Y
+
+    @staticmethod
+    def isExoShapeValid(exogenousSeries, numExoVariables):
+
+        if numExoVariables == 0:
+            return exogenousSeries is None
+        else:
+            return \
+                exogenousSeries is not None \
+                and \
+                exogenousSeries.shape[1] == numExoVariables
