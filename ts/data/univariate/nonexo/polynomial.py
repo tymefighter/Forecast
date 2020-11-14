@@ -7,7 +7,7 @@ from ts.log import GlobalLogger
 class PolynomialGenerator(UnivariateNonExogenous):
     """Polynomial Univariate Non Exogenous Time Series Data Generator"""
 
-    def __init__(self, polynomialCoeffs):
+    def __init__(self, polynomialCoeffs=[1.0, 1.0]):
         """
         Initialize Data Generator for Polynomial Generator which generates data
         using the provided polynomial coefficient list

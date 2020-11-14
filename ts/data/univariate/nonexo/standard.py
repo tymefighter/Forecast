@@ -13,7 +13,7 @@ class StandardGenerator(UnivariateNonExogenous):
     Term and Extreme. It provides slight variants as well.
     """
 
-    def __init__(self, typeOfData):
+    def __init__(self, typeOfData='simple'):
         """
         Initialize the Standard Data Generator
 

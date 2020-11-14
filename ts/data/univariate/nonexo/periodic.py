@@ -10,7 +10,7 @@ class PeriodicGenerator(UnivariateNonExogenous):
     def __init__(
             self,
             initialPhase=0,
-            period=1.0
+            period=5.0
     ):
         """
         Initialize Data Generator for Periodic Generator which generates data
