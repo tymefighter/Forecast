@@ -6,9 +6,22 @@ from ts.log import GlobalLogger
 
 
 class StandardGenerator(UnivariateNonExogenous):
-    """"""
+    """
+    Standard Data Generation
+
+    Generates Common Types Required Types of Data, like Simple, Long
+    Term and Extreme. It provides slight variants as well.
+    """
 
     def __init__(self, typeOfData):
+        """
+        Initialize the Standard Data Generator
+
+        :param typeOfData: Affects only the coefficients of the ARMA data generator.
+        Choices: simple, long_term, extreme_short, extreme_long, extreme_different.
+        Note that the prefix 'extreme' just refers to the noise being generated from
+        an extreme valued distribution (for example Gumbel, Lognormal)
+        """
         GlobalLogger.getLogger().log(
             f'Initializing Standard Generator using type: {typeOfData}',
             1,
@@ -62,6 +75,15 @@ class StandardGenerator(UnivariateNonExogenous):
 
     @staticmethod
     def generateRandomArmaCoeff(P, Q):
+        """
+        Generate Random Coefficients for Observation and Noise Terms present in
+        the ARMA Generator
+
+        :param P: Length of Observation Coefficients
+        :param Q: Length of Noise Coefficients
+        :return: Observation Coefficients and Noise Coefficients
+        """
+
         obsCoef = np.concatenate([
             np.random.uniform(-0.1, 0, size=P // 2),
             np.random.uniform(0, 0.1, size=P // 2)
