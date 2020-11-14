@@ -4,11 +4,10 @@ import time
 import tensorflow as tf
 import numpy as np
 
-from ts.model.univariate.univariate import UnivariateModel
 from ts.log import GlobalLogger, ConsoleLogger
 
 
-class ExtremeTime2(UnivariateModel):
+class ExtremeTime2:
 
     def __init__(
             self,
