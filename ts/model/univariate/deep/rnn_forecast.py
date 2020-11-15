@@ -11,6 +11,7 @@ class RnnForecast:
     def __init__(
             self,
             forecastHorizon=1,
+            layerClass=tf.keras.layers.SimpleRNN,
             stateSize=10,
             numRnnLayers=1,
             numExoVariables=0,
@@ -29,8 +30,8 @@ class RnnForecast:
             self.model = tf.keras.Sequential()
 
             for i in range(numRnnLayers):
-                self.model.add(tf.keras.layers.SimpleRNN(
-                    stateSize,
+                self.model.add(layerClass(
+                    units=stateSize,
                     return_sequences=True
                 ))
 

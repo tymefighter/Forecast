@@ -3,7 +3,7 @@ import tensorflow as tf
 from ts.model.univariate.deep.rnn_forecast import RnnForecast
 
 
-class GruForecast(RnnForecast):
+class SimpleRnnForecast(RnnForecast):
 
     def __init__(
             self,
@@ -15,7 +15,7 @@ class GruForecast(RnnForecast):
     ):
         super().__init__(
             forecastHorizon,
-            tf.keras.layers.GRU,
+            tf.keras.layers.SimpleRNN,
             stateSize,
             numRnnLayers,
             numExoVariables,
