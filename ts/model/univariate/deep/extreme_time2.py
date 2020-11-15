@@ -30,9 +30,9 @@ class ExtremeTime2:
         as a memory cell
         :param embeddingSize: Size of the hidden state of the GRU encoder
         :param contextSize: Size of context produced from historical sequences
-        :param numExoVariables: Number of exogenous variables to be used for training
-        :param modelLoadPath: If specified, then all provided parameters (except logging)
-        are ignored, and the model is loaded from the path
+        :param numExoVariables: Number of exogenous variables the model takes as input
+        :param modelLoadPath: If specified, then all provided parameters are ignored,
+        and the model is loaded from the path
         """
 
         tf.keras.backend.set_floatx('float64')
