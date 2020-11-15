@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 from ts.data.univariate.nonexo import ArmaGenerator
-from ts.model.univariate.deep import RnnForecast
+from ts.model.univariate.deep import SimpleRnnForecast
 from ts.plot import Plot
 from ts.utility import Utility
 
@@ -20,7 +20,6 @@ def simpleData(n):
 
 
 def prepareData(data, trainSize):
-
     train = data[:trainSize]
     test = data[trainSize:]
 
@@ -39,14 +38,14 @@ def main():
     data = simpleData(5000)
     train, test = Utility.trainTestSplit(data, 4500)
 
-    rnnForecast = RnnForecast(1, 10, 1, 0)
+    rnnForecast = SimpleRnnForecast(1, 10, 1, 0)
     trainSequences = Utility.breakSeq(train, 100)
 
     modelSaveDir = os.path.expanduser('~/rnnModel')
     losses = rnnForecast.train(
         trainSequences,
         tf.optimizers.Adam(0.03),
-        numIterations=10,
+        numIterations=2,
         modelSavePath=modelSaveDir
     )
 
