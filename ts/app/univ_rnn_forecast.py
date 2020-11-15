@@ -1,9 +1,8 @@
 import os
-import numpy as np
 import tensorflow as tf
 
 from ts.data.univariate.nonexo import StandardGenerator
-from ts.model.univariate.deep import SimpleRnnForecast
+from ts.model.univariate.multiseq.deep import SimpleRnnForecast
 from ts.plot import Plot
 from ts.utility import Utility
 
