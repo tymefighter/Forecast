@@ -117,10 +117,13 @@ class ExtremeTime:
 
         for iteration in range(numIterations):
 
-            seqStartTime = self.windowSize
-
             verbose.log(f'begin iteration {iteration}', 1)
 
+            seqStartTime = self.windowSize
+            cumulIterLoss = 0.0
+            numSeq = 0
+
+            iterStartTime = time.time()
             while seqStartTime < n:
                 seqEndTime = min(seqStartTime + sequenceLength, n - 1)
 
@@ -129,15 +132,26 @@ class ExtremeTime:
                 endTime = time.time()
                 timeTaken = endTime - startTime
 
+                cumulIterLoss += loss
+                numSeq += 1
+
                 verbose.log(f'start timestep: {seqStartTime}'
                             + f' | end timestep: {seqEndTime}'
                             + f' | time taken: {timeTaken : .2f} sec'
-                            + f' | Loss: {loss}', 1)
-
-                if returnLosses:
-                    losses.append(loss)
+                            + f' | Loss: {loss}', 2)
 
                 seqStartTime += sequenceLength
+
+            iterEndTime = time.time()
+            iterTimeTaken = iterEndTime - iterStartTime
+            avgIterLoss = cumulIterLoss / numSeq
+
+            verbose.log(f'Completed Iteration: {iteration}'
+                        + f' | time taken: {iterTimeTaken : .2f} sec'
+                        + f' | Avg Iteration Loss: {avgIterLoss}', 1)
+
+            if returnLosses:
+                losses.append(avgIterLoss)
 
             if modelSavePath is not None:
                 logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
