@@ -34,7 +34,7 @@ class RnnForecast:
         and the model is loaded from the path
         """
 
-        if modelLoadPath:
+        if modelLoadPath is not None:
             self.load(modelLoadPath)
         else:
             self.forecastHorizon = forecastHorizon
@@ -56,18 +56,22 @@ class RnnForecast:
             numIterations=1
     ):
         """
+        Train the model on the provided data sequences
 
-        :param trainSequences:
-        :param optimizer:
-        :param modelSavePath:
-        :param verboseLevel:
-        :param returnLosses:
-        :param numIterations:
-        :return:
+        :param trainSequences: Sequences of data
+        :param optimizer: Optimizer using which to train the parameters of the model
+        :param modelSavePath: If not None, then save the model to this path after
+        every iteration of training
+        :param verboseLevel: Verbosity Level, higher value means more information
+        :param returnLosses: If True, then return losses of every iteration, else
+        does not return losses
+        :param numIterations: Number of iterations to train the model for
+        :return: If returnLosses is True, then return list of losses of every
+        iteration, else None
         """
 
         logger = GlobalLogger.getLogger()
-        logger.log("Compiling Model", 1, self.train.__name__)
+        logger.log('Compiling Model', 1, self.train.__name__)
 
         self.model.compile(optimizer=optimizer, loss=tf.keras.losses.MSE)
 
@@ -78,7 +82,7 @@ class RnnForecast:
                 modelSavePath
             )]
 
-        logger.log("Begin Training Model", 1, self.train.__name__)
+        logger.log('Begin Training Model', 1, self.train.__name__)
         history = self.model.fit(
             ForecastDataSequence(
                 trainSequences,
@@ -235,7 +239,7 @@ class RnnForecast:
         """ Builds Model Architecture """
 
         GlobalLogger.getLogger().log(
-            "Building Model Architecture",
+            'Building Model Architecture',
             1,
             self.__init__.__name__
         )
