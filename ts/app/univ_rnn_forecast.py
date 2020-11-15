@@ -41,12 +41,12 @@ def main():
     rnnForecast = SimpleRnnForecast(1, 10, 1, 0)
     trainSequences = Utility.breakSeq(train, 100)
 
-    modelSaveDir = os.path.expanduser('~/rnnModel')
+    modelSavePath = os.path.expanduser('~/rnnModel')
     losses = rnnForecast.train(
         trainSequences,
         tf.optimizers.Adam(0.03),
         numIterations=2,
-        modelSavePath=modelSaveDir
+        modelSavePath=modelSavePath
     )
 
     Plot.plotLoss(losses)
