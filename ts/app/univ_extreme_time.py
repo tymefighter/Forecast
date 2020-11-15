@@ -6,6 +6,7 @@ from ts.model.univariate.deep import ExtremeTime
 from ts.plot import Plot
 from ts.log import GlobalLogger
 
+
 def main():
     GlobalLogger.getLogger().setLevel(2)
 
@@ -25,10 +26,10 @@ def main():
     losses = model.train(
         trainTargets,
         100,
+        numIterations=3,
         modelSavePath=modelSavePath,
         verboseLevel=2,
-        returnLosses=True,
-        numIterations=3
+        returnLosses=True
     )
 
     Plot.plotLoss(losses, xlabel='seq')

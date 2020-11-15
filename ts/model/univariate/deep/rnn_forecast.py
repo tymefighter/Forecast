@@ -49,23 +49,23 @@ class RnnForecast:
     def train(
             self,
             trainSequences,
+            numIterations=1,
             optimizer=tf.optimizers.Adam(),
             modelSavePath=None,
             verboseLevel=1,
-            returnLosses=True,
-            numIterations=1
+            returnLosses=True
     ):
         """
         Train the model on the provided data sequences
 
         :param trainSequences: Sequences of data
+        :param numIterations: Number of iterations of training to be performed
         :param optimizer: Optimizer using which to train the parameters of the model
         :param modelSavePath: If not None, then save the model to this path after
         every iteration of training
         :param verboseLevel: Verbosity Level, higher value means more information
         :param returnLosses: If True, then return losses of every iteration, else
         does not return losses
-        :param numIterations: Number of iterations to train the model for
         :return: If returnLosses is True, then return list of losses of every
         iteration, else None
         """
