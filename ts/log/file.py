@@ -16,7 +16,7 @@ class FileLogger(Logger):
         if erasePrevContent:
             self.file = open(filepath, 'w')
         else:
-            self.file = open(filepath, 'a+')
+            self.file = open(filepath, 'a')
         self.logLevel = logLevel
 
     def setLevel(self, logLevel):

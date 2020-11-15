@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import tensorflow as tf
 
@@ -17,6 +18,7 @@ def main():
 
     Plot.plotDataCols(np.expand_dims(targets, axis=1))
 
+    modelSavePath = None  # os.path.expanduser('~/extreme2.model')
     model = ExtremeTime2(horizon, 10, 10, 20, 20, 0)
 
     losses = model.train(
@@ -24,6 +26,7 @@ def main():
         100,
         numIterations=5,
         optimizer=tf.optimizers.Adam(0.3),
+        modelSavePath=modelSavePath,
         verboseLevel=2,
         returnLosses=True
     )

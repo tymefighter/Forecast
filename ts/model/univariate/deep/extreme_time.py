@@ -137,12 +137,11 @@ class ExtremeTime:
                 if returnLosses:
                     losses.append(loss)
 
-                if modelSavePath is not None:
-                    logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
-
-                    self.save(modelSavePath)
-
                 seqStartTime += sequenceLength
+
+            if modelSavePath is not None:
+                logger.log(f'Saving Model at {modelSavePath}', 1, self.train.__name__)
+                self.save(modelSavePath)
 
         self.buildMemory(X, Y, n)
 
