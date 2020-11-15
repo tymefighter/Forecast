@@ -1,10 +1,10 @@
 import tensorflow as tf
 
-from ts.model.univariate.deep.rnn_forecast import RnnForecast
+from ts.model.univariate.multiseq.deep import RnnForecast
 
 
-class GruForecast(RnnForecast):
-    """ GRU forecasting model """
+class LstmForecast(RnnForecast):
+    """ LSTM forecasting model """
 
     def __init__(
             self,
@@ -15,12 +15,12 @@ class GruForecast(RnnForecast):
             modelLoadPath=None
     ):
         """
-        Initialize GRU Forecasting model using the given parameters
+        Initialize LSTM Forecasting model using the given parameters
 
         :param forecastHorizon: How much further in the future the model has to
         predict the target series variable
-        :param stateSize: Size of the state of each GRU layer
-        :param numRnnLayers: Number of GRU layers of the model
+        :param stateSize: Size of the state of each LSTM layer
+        :param numRnnLayers: Number of LSTM layers of the model
         :param numExoVariables: Number of exogenous variables the model takes as input
         :param modelLoadPath: If specified, then all provided parameters are ignored,
         and the model is loaded from the path
@@ -28,7 +28,7 @@ class GruForecast(RnnForecast):
 
         super().__init__(
             forecastHorizon,
-            tf.keras.layers.GRU,
+            tf.keras.layers.LSTM,
             stateSize,
             numRnnLayers,
             numExoVariables,

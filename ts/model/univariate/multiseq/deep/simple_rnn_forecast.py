@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from ts.model.univariate.deep.rnn_forecast import RnnForecast
+from ts.model.univariate.multiseq.deep import RnnForecast
 
 
 class SimpleRnnForecast(RnnForecast):
@@ -21,3 +21,8 @@ class SimpleRnnForecast(RnnForecast):
             numExoVariables,
             modelLoadPath
         )
+
+    """
+    Methods train, predict, evaluate, save and load are inherited from
+    RnnForecast class
+    """
