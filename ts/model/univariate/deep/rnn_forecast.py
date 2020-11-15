@@ -37,24 +37,14 @@ class RnnForecast:
         if modelLoadPath:
             self.load(modelLoadPath)
         else:
-            GlobalLogger.getLogger().log(
-                "Building Model Architecture",
-                1,
-                self.__init__.__name__
-            )
-
             self.forecastHorizon = forecastHorizon
-            self.model = tf.keras.Sequential()
-
-            for i in range(numRnnLayers):
-                self.model.add(layerClass(
-                    units=stateSize,
-                    return_sequences=True
-                ))
-
-            self.model.add(tf.keras.layers.Dense(1, activation=None))
+            self.layerClass = layerClass
+            self.stateSize = stateSize
+            self.numRnnLayers = numRnnLayers
             self.inputDimension = numExoVariables + 1
-            self.model.build(input_shape=(None, None, self.inputDimension))
+            self.model = None
+
+            self.buildModel()
 
     def train(
             self,
@@ -197,20 +187,21 @@ class RnnForecast:
         """
 
         GlobalLogger.getLogger().log('Saving Model', 1, self.save.__name__)
-        self.model.save(
-            modelSavePath,
-            include_optimizer=False,
-            save_format='tf'
-        )
 
-        modelSavePath += '/info'
-        fl = open(modelSavePath, 'wb')
         saveDict = {
             'forecastHorizon': self.forecastHorizon,
-            'inputDimension': self.inputDimension
+            'layerClass': self.layerClass,
+            'stateSize': self.stateSize,
+            'numRnnLayers': self.numRnnLayers,
+            'inputDimension': self.inputDimension,
+            'weights': self.model.get_weights()
         }
-        pickle.dump(saveDict, fl)
-        fl.close()
+
+        saveFile = open(modelSavePath, 'wb')
+        pickle.dump(saveDict, saveFile)
+        saveFile.close()
+
+        GlobalLogger.getLogger().log('Saving Complete', 1, self.save.__name__)
 
     def load(
             self,
@@ -224,18 +215,41 @@ class RnnForecast:
         """
 
         GlobalLogger.getLogger().log('Loading Model', 1, self.load.__name__)
-        self.model = tf.keras.models.load_model(
-            modelLoadPath,
-            compile=False
-        )
 
-        modelLoadPath += '/info'
-        fl = open(modelLoadPath, 'rb')
-        loadDict = pickle.load(fl)
-        fl.close()
+        loadFile = open(modelLoadPath, 'rb')
+        loadDict = pickle.load(loadFile)
+        loadFile.close()
 
         self.forecastHorizon = loadDict['forecastHorizon']
+        self.layerClass = loadDict['layerClass']
+        self.stateSize = loadDict['stateSize']
+        self.numRnnLayers = loadDict['numRnnLayers']
         self.inputDimension = loadDict['inputDimension']
+
+        self.buildModel()
+        self.model.set_weights(loadDict['weights'])
+
+        GlobalLogger.getLogger().log('Loading Complete', 1, self.load.__name__)
+
+    def buildModel(self):
+        """ Builds Model Architecture """
+
+        GlobalLogger.getLogger().log(
+            "Building Model Architecture",
+            1,
+            self.__init__.__name__
+        )
+
+        self.model = tf.keras.Sequential()
+
+        for i in range(self.numRnnLayers):
+            self.model.add(self.layerClass(
+                units=self.stateSize,
+                return_sequences=True
+            ))
+
+        self.model.add(tf.keras.layers.Dense(1, activation=None))
+        self.model.build(input_shape=(None, None, self.inputDimension))
 
 
 class SaveCallback(tf.keras.callbacks.Callback):
