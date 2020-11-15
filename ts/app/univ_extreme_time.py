@@ -10,8 +10,8 @@ from ts.log import GlobalLogger
 def main():
     GlobalLogger.getLogger().setLevel(2)
 
-    n = 5500
-    trainN = 5000
+    n = 1500
+    trainN = 1400
     horizon = 1
 
     targets = StandardGenerator('extreme_short').generate(n)
@@ -20,8 +20,8 @@ def main():
 
     Plot.plotDataCols(np.expand_dims(targets, axis=1))
 
-    modelSavePath = os.path.expanduser('~/extreme.model')
-    model = ExtremeTime(horizon, 80, 40, 10, 10, 0)
+    modelSavePath = None  # os.path.expanduser('~/extreme.model')
+    model = ExtremeTime(horizon, 10, 10, 10, 10, 0)
 
     losses = model.train(
         trainTargets,
