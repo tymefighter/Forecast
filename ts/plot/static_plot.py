@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib
+import numpy as np
 
 
 class Plot:
@@ -11,7 +12,7 @@ class Plot:
         Plots each column of X as a time series in a subplot
 
         :param X: Matrix with each column as a time series, it is a numpy array
-        of shape (T, d)
+        of shape (T, d) or a matrix of shape (T,) i.e. it has only one column
         :param colNames: Names of each column. If it is not None, then this would
         be present as the subplot title for that column
         :param title: Title of the entire plot
@@ -20,18 +21,23 @@ class Plot:
 
         matplotlib.use('TkAgg')
 
-        (T, d) = X.shape
+        if len(X.shape) == 1:
+            d = 1
+        else:
+            d = X.shape[1]
+
         fig, axes = plt.subplots(d)
 
-        for dim in range(d):
-            if d == 1:
-                ax = axes
-            else:
-                ax = axes[0]
+        if d == 1:
+            axes.plot(np.squeeze(X))
 
-            ax.plot(X[:, dim])
-            if colNames is not None:
-                ax.set_title(colNames[dim])
+        else:
+            for dim in range(d):
+                ax = axes[dim]
+
+                ax.plot(X[:, dim])
+                if colNames is not None:
+                    ax.set_title(colNames[dim])
 
         fig.suptitle(title)
         plt.show()
