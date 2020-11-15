@@ -7,6 +7,10 @@ from ts.log import GlobalLogger
 
 
 class RnnForecast:
+    """
+    RNN based forecasting model which allows for any layer to
+    be provided as input
+    """
 
     def __init__(
             self,
@@ -17,6 +21,19 @@ class RnnForecast:
             numExoVariables=0,
             modelLoadPath=None
     ):
+        """
+        Initialize RNN-based Forecasting model using the given parameters
+
+        :param forecastHorizon: How much further in the future the model has to
+        predict the target series variable
+        :param layerClass: Class of the layers of the model
+        :param stateSize: Size of the state of each layer
+        :param numRnnLayers: Number of RNN based layers of the model
+        :param numExoVariables: Number of exogenous variables the model takes as input
+        :param modelLoadPath: If specified, then all provided parameters are ignored,
+        and the model is loaded from the path
+        """
+
         if modelLoadPath:
             self.load(modelLoadPath)
         else:
@@ -48,6 +65,17 @@ class RnnForecast:
             returnLosses=True,
             numIterations=1
     ):
+        """
+
+        :param trainSequences:
+        :param optimizer:
+        :param modelSavePath:
+        :param verboseLevel:
+        :param returnLosses:
+        :param numIterations:
+        :return:
+        """
+
         logger = GlobalLogger.getLogger()
         logger.log("Compiling Model", 1, self.train.__name__)
 
@@ -211,11 +239,28 @@ class RnnForecast:
 
 
 class SaveCallback(tf.keras.callbacks.Callback):
+    """ Class to save model after each epoch """
 
     def __init__(self, rnnForecastModel, modelSavePath):
+        """
+        Initialize SaveCallback Class Members
+
+        :param rnnForecastModel: The forecasting model itself
+        :param modelSavePath: Path where to save the model
+        """
+
         super().__init__()
         self.rnnForecastModel = rnnForecastModel
         self.modelSavePath = modelSavePath
 
     def on_epoch_end(self, epoch, logs=None):
+        """
+        Saves the model at the path provided at initialization
+
+        :param epoch: Number of the epoch which has just ended
+        :param logs: metric results for this training epoch, and for the validation
+        epoch if validation is performed (tensorflow docs)
+        :return: None
+        """
+
         self.rnnForecastModel.save(self.modelSavePath)
