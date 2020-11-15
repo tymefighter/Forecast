@@ -11,12 +11,14 @@ class Utility:
         has length less than or equal to the provided length
 
         :param data: The data, it is a numpy array of shape (n, d) where n is the number
-        of data points and d is the number of dimensions
+        of data points and d is the number of dimensions or a numpy array of shape (n,)
         :param seqLength: Size of each broken up sequence except maybe the last one,
         which would have length less than or equal to seqLength
         :return: Python List of broken up data sequences as numpy arrays of size
-        (seqLength, d) each except the last one. The last one has size (lastSize, d)
-        where lastSize is always less than or equal to seqLength
+        (seqLength, d) each except the last one, the last one has size (lastSize, d)
+        where lastSize is always less than or equal to seqLength, this is when the
+        input has shape (n, d). If input has shape (n,), then the dimension axis is
+        not present, i.e. each seq has shape (seqLength,), last one has (lastSize,)
         """
 
         n = data.shape[0]
@@ -29,6 +31,35 @@ class Utility:
             seqStart = seqEnd
 
         return dataSeq
+
+    @staticmethod
+    def breakTrainSeq(targetSeries, exogenousSeries, seqLength):
+        """
+        Break Target Series and Exogenous Series into a training list of
+        sequences which is required by models which train on multiple sequences
+
+        :param targetSeries: The target Series, it has shape (n, d1) or (n,)
+        :param exogenousSeries: Exogenous Series, it can be None, and if it is not
+        None, then it has shape (n, d2)
+        :param seqLength: The length of each broken sequence in the returned list
+        of sequences
+        :return: If exogenous series is None, then breaks the target series and
+        returns a list of parts of the target series only. If exogenous series
+        is not None, then returns a list of tuples where the first element of the
+        tuple is a target series part, and second is a exogenous series part
+        """
+
+        assert (targetSeries.shape[0] == exogenousSeries.shape[0])
+
+        if exogenousSeries is None:
+            return Utility.breakSeq(targetSeries, seqLength)
+
+        targetSequences = Utility.breakSeq(targetSeries, seqLength)
+        exoSequences = Utility.breakSeq(exogenousSeries, seqLength)
+
+        assert (len(targetSeries) == len(exogenousSeries))
+
+        return list(zip(targetSequences, exoSequences))
 
     @staticmethod
     def trainTestSplit(data, train, val=None):
