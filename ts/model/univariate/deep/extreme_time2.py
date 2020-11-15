@@ -71,11 +71,11 @@ class ExtremeTime2:
             targetSeries,
             sequenceLength,
             exogenousSeries=None,
+            numIterations=1,
             optimizer=tf.optimizers.Adam(),
             modelSavePath=None,
             verboseLevel=1,
-            returnLosses=True,
-            numIterations=1
+            returnLosses=True
     ):
         """
         Train the Model Parameters on the provided data
@@ -86,6 +86,8 @@ class ExtremeTime2:
         numpy array of shape (n, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not
         considered
+        :param numIterations: Number of iterations of training to be performed
+        :return: If returnLosses is True, then numpy array of losses of shape (numSeq,)
         :param optimizer: Optimizer of training the parameters
         :param modelSavePath: Path where to save the model parameters after
         each training an a sequence, if None then parameters are not saved
@@ -93,8 +95,6 @@ class ExtremeTime2:
         the information printed to the console
         :param returnLosses: If True, then losses are returned, else losses are not
         returned
-        :param numIterations: Number of iterations of training to be performed
-        :return: If returnLosses is True, then numpy array of losses of shape (numSeq,)
         is returned, else None is returned
         """
 

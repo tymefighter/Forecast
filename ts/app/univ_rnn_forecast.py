@@ -18,8 +18,8 @@ def main():
     modelSavePath = os.path.expanduser('~/rnnModel')
     losses = rnnForecast.train(
         trainSequences,
-        tf.optimizers.Adam(0.03),
         numIterations=2,
+        optimizer=tf.optimizers.Adam(0.03),
         modelSavePath=modelSavePath
     )
 

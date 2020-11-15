@@ -22,10 +22,10 @@ def main():
     losses = model.train(
         trainTargets,
         100,
+        numIterations=5,
         optimizer=tf.optimizers.Adam(0.3),
         verboseLevel=2,
-        returnLosses=True,
-        numIterations=5
+        returnLosses=True
     )
 
     Plot.plotLoss(losses, xlabel='seq')
