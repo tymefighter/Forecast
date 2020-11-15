@@ -1,91 +1,10 @@
 import numpy as np
 import os
 
-from ts.data.univariate.nonexo import ArmaGenerator
+from ts.data.univariate.nonexo import StandardGenerator
 from ts.model.univariate.deep import ExtremeTime
 from ts.plot import Plot
 from ts.log import GlobalLogger
-
-
-def simpleData(n):
-    P = Q = 5
-
-    obsCoef = np.concatenate([
-        np.random.uniform(-0.1, 0, size=P // 2),
-        np.random.uniform(0, 0.1, size=P // 2)
-    ])
-
-    noiseCoef = np.concatenate([
-        np.random.uniform(-0.01, 0, size=Q // 2),
-        np.random.uniform(0, 0.01, size=Q // 2)
-    ])
-
-    noiseGenFunc = np.random.normal
-    noiseGenParams = (10.0, 1.0)
-
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
-        .generate(n)
-
-
-def longTermData(n):
-    P = Q = 50
-
-    obsCoef = np.concatenate([
-        np.random.uniform(-0.1, 0, size=P // 2),
-        np.random.uniform(0, 0.1, size=P // 2)
-    ])
-
-    noiseCoef = np.concatenate([
-        np.random.uniform(-0.01, 0, size=Q // 2),
-        np.random.uniform(0, 0.01, size=Q // 2)
-    ])
-
-    noiseGenFunc = np.random.normal
-    noiseGenParams = (10.0, 1.0)
-
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
-        .generate(n)
-
-
-def extremeData1(n):
-    P = Q = 10
-
-    obsCoef = np.concatenate([
-        np.random.uniform(-0.1, 0, size=P // 2),
-        np.random.uniform(0, 0.1, size=P // 2)
-    ])
-
-    noiseCoef = np.concatenate([
-        np.random.uniform(-0.01, 0, size=Q // 2),
-        np.random.uniform(0, 0.01, size=Q // 2)
-    ])
-
-    noiseGenFunc = np.random.lognormal
-    noiseGenParams = (1.0, 1.0)
-
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
-        .generate(n)
-
-
-def extremeData2(n):
-    P = Q = 10
-
-    obsCoef = np.concatenate([
-        np.random.uniform(-0.1, 0, size=P // 2),
-        np.random.uniform(0, 0.1, size=P // 2)
-    ])
-
-    noiseCoef = np.concatenate([
-        np.random.uniform(-0.01, 0, size=Q // 2),
-        np.random.uniform(0, 0.01, size=Q // 2)
-    ])
-
-    noiseGenFunc = np.random.gumbel
-    noiseGenParams = (100., 10.0)
-
-    return ArmaGenerator(obsCoef, noiseCoef, noiseGenFunc, noiseGenParams) \
-        .generate(n)
-
 
 def main():
     GlobalLogger.getLogger().setLevel(2)
@@ -94,7 +13,7 @@ def main():
     trainN = 5000
     horizon = 1
 
-    targets = extremeData2(n)
+    targets = StandardGenerator('extreme_short').generate(n)
     trainTargets = targets[:trainN]
     testTargets = targets[trainN:]
 
