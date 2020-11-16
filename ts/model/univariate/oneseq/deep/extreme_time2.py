@@ -290,25 +290,25 @@ class ExtremeTime2:
         logger.log('Load Dictionary from Model Params file', 1, self.load.__name__)
 
         fl = open(modelLoadPath, 'rb')
-        saveDict = pickle.load(fl)
+        loadDict = pickle.load(fl)
         fl.close()
 
         logger.log('Loading Params', 1, self.load.__name__)
 
-        self.forecastHorizon = saveDict['forecastHorizon']
-        self.memorySize = saveDict['memorySize']
-        self.windowSize = saveDict['windowSize']
-        self.inputDimension = saveDict['inputDimension']
-        self.embeddingSize = saveDict['embeddingSize']
-        self.contextSize = saveDict['contextSize']
-        self.memory = saveDict['memory']
-        self.context = saveDict['context']
+        self.forecastHorizon = loadDict['forecastHorizon']
+        self.memorySize = loadDict['memorySize']
+        self.windowSize = loadDict['windowSize']
+        self.inputDimension = loadDict['inputDimension']
+        self.embeddingSize = loadDict['embeddingSize']
+        self.contextSize = loadDict['contextSize']
+        self.memory = loadDict['memory']
+        self.context = loadDict['context']
 
         self.buildModel()
-        self.gruInput.set_weights(saveDict['gruInput'])
-        self.gruMemory.set_weights(saveDict['gruMemory'])
-        self.gruContext.set_weights(saveDict['gruContext'])
-        self.outDense.set_weights(saveDict['outDense'])
+        self.gruInput.set_weights(loadDict['gruInput'])
+        self.gruMemory.set_weights(loadDict['gruMemory'])
+        self.gruContext.set_weights(loadDict['gruContext'])
+        self.outDense.set_weights(loadDict['outDense'])
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
         """

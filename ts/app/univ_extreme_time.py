@@ -34,6 +34,7 @@ def main():
     )
 
     Plot.plotLoss(losses, xlabel='seq')
+
     loss, Ypred = model.evaluate(testTargets, returnPred=True)
 
     print(f'Test Loss Value: {loss}')

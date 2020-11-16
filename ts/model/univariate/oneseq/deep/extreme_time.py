@@ -303,27 +303,27 @@ class ExtremeTime:
         logger.log('Load Dictionary from Model Params file', 1, self.load.__name__)
 
         fl = open(modelLoadPath, 'rb')
-        saveDict = pickle.load(fl)
+        loadDict = pickle.load(fl)
         fl.close()
 
         logger.log('Loading Params', 1, self.load.__name__)
 
-        self.forecastHorizon = saveDict['forecastHorizon']
-        self.memorySize = saveDict['memorySize']
-        self.windowSize = saveDict['windowSize']
-        self.inputDimension = saveDict['inputDimension']
-        self.encoderStateSize = saveDict['encoderStateSize']
-        self.lstmStateSize = saveDict['lstmStateSize']
-        self.memory = saveDict['memory']
-        self.q = saveDict['q']
+        self.forecastHorizon = loadDict['forecastHorizon']
+        self.memorySize = loadDict['memorySize']
+        self.windowSize = loadDict['windowSize']
+        self.inputDimension = loadDict['inputDimension']
+        self.encoderStateSize = loadDict['encoderStateSize']
+        self.lstmStateSize = loadDict['lstmStateSize']
+        self.memory = loadDict['memory']
+        self.q = loadDict['q']
 
         self.buildModel()
-        self.gruEncoder.set_weights(saveDict['gruEncoder'])
-        self.lstm.set_weights(saveDict['lstm'])
-        self.outDense.set_weights(saveDict['outDense'])
-        self.embeddingDense.set_weights(saveDict['embeddingDense'])
+        self.gruEncoder.set_weights(loadDict['gruEncoder'])
+        self.lstm.set_weights(loadDict['lstm'])
+        self.outDense.set_weights(loadDict['outDense'])
+        self.embeddingDense.set_weights(loadDict['embeddingDense'])
 
-        self.b = tf.Variable(saveDict['b'])
+        self.b = tf.Variable(loadDict['b'])
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
         """
