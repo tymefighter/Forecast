@@ -56,6 +56,9 @@ class ExtremeTime2:
 
             self.outDense = self.gruContext = self.gruMemory = self.gruInput = None
             self.buildModel()
+            self.state = self.getInitialState()
+
+            logger.log(f'state shape: {self.state.shape}', 2, self.predict.__name__)
 
     def train(
             self,
@@ -174,14 +177,10 @@ class ExtremeTime2:
         X = Utility.prepareDataPred(targetSeries, exogenousSeries)
 
         n = X.shape[0]
-        state = self.getInitialState()
         Ypred = [None] * n
 
-        logger.log(f'state shape: {state.shape}', 2, self.predict.__name__)
-
         for t in range(n):
-            Ypred[t], state = \
-                self.predictTimestep(state, X, t)
+            Ypred[t] = self.predictTimestep(X, t)
 
         Ypred = np.array(Ypred)
         logger.log(f'Output Shape: {Ypred.shape}', 2, self.predict.__name__)
@@ -267,7 +266,8 @@ class ExtremeTime2:
             'gruInput': self.gruInput.get_weights(),
             'gruMemory': self.gruMemory.get_weights(),
             'gruContext': self.gruContext.get_weights(),
-            'outDense': self.outDense.get_weights()
+            'outDense': self.outDense.get_weights(),
+            'state': self.state
         }
 
         logger.log('Saving Dictionary', 1, self.save.__name__)
@@ -309,6 +309,7 @@ class ExtremeTime2:
         self.gruMemory.set_weights(loadDict['gruMemory'])
         self.gruContext.set_weights(loadDict['gruContext'])
         self.outDense.set_weights(loadDict['outDense'])
+        self.state = loadDict['state']
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
         """
@@ -326,13 +327,10 @@ class ExtremeTime2:
 
         with tf.GradientTape() as tape:
             self.buildMemory(X, seqStartTime)
-            state = self.getInitialState()
-
-            logger.log(f'state shape: {state.shape}', 2, self.trainSequence.__name__)
 
             Ypred = []
             for t in range(seqStartTime, seqEndTime + 1):
-                pred, state = self.predictTimestep(state, X, t)
+                pred = self.predictTimestep(X, t)
                 Ypred.append(pred)
 
             Ypred = tf.convert_to_tensor(Ypred, dtype=tf.float64)
@@ -438,24 +436,23 @@ class ExtremeTime2:
 
         return gruMemoryState, gruContextState
 
-    def predictTimestep(self, state, X, currentTime):
+    def predictTimestep(self, X, currentTime):
         """
         Predict on a Single Timestep
-        :param state: State of Input GRU
+
         :param X: Features, has shape (n, self.inputShape)
         :param currentTime: Current Timestep
         :return: The predicted value on current timestep and the next state
         """
 
         logger = GlobalLogger.getLogger()
-        logger.log(f'state shape: {state.shape}', 2, self.predictTimestep.__name__)
 
-        state, _ = self.gruInput(
+        self.state, _ = self.gruInput(
             np.expand_dims(X[currentTime], axis=0),
-            state
+            self.state
         )
 
-        embedding = tf.squeeze(state)
+        embedding = tf.squeeze(self.state)
 
         attentionWeights = self.computeAttention(embedding)
         logger.log(f'Attention Shape: {attentionWeights.shape}', 2, self.predictTimestep.__name__)
@@ -473,7 +470,7 @@ class ExtremeTime2:
         pred = tf.squeeze(self.outDense(tf.expand_dims(concatVector, axis=0)))
         logger.log(f'Prediction: {pred}', 2, self.predictTimestep.__name__)
 
-        return pred, state
+        return pred
 
     def computeAttention(self, embedding):
         """

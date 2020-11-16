@@ -5,9 +5,12 @@ import tensorflow as tf
 from ts.data.univariate.nonexo import StandardGenerator
 from ts.model.univariate.oneseq.deep import ExtremeTime2
 from ts.plot import Plot
+from ts.log import GlobalLogger
 
 
 def main():
+    GlobalLogger.getLogger().setLevel(1)
+
     n = 1500
     trainN = 1400
     horizon = 1
@@ -33,6 +36,8 @@ def main():
     )
 
     Plot.plotLoss(losses, xlabel='seq')
+
+    # model = ExtremeTime2(modelLoadPath=modelSavePath)
     loss, Ypred = model.evaluate(trainTargets, returnPred=True)
 
     Ytrue = trainTargets[horizon:]

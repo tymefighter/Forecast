@@ -8,7 +8,7 @@ from ts.log import GlobalLogger
 
 
 def main():
-    GlobalLogger.getLogger().setLevel(2)
+    GlobalLogger.getLogger().setLevel(1)
 
     n = 1500
     trainN = 1400
