@@ -55,11 +55,8 @@ class ExtremeTime:
 
             logger.log('Building Model Parameters', 1, self.__init__.__name__)
 
-            self.gruEncoder = tf.keras.layers.GRUCell(self.encoderStateSize)
-            self.gruEncoder.build(input_shape=(self.inputDimension,))
-
-            self.lstm = tf.keras.layers.LSTMCell(self.lstmStateSize)
-            self.lstm.build(input_shape=(self.inputDimension,))
+            self.lstm = self.gruEncoder = None
+            self.buildModel()
 
             self.W = tf.Variable(tf.random.normal((1, self.lstmStateSize), dtype=tf.float64))
             self.A = tf.Variable(
@@ -324,12 +321,8 @@ class ExtremeTime:
         self.memory = saveDict['memory']
         self.q = saveDict['q']
 
-        self.gruEncoder = tf.keras.layers.GRUCell(units=self.encoderStateSize)
-        self.gruEncoder.build(input_shape=(self.inputDimension,))
+        self.buildModel()
         self.gruEncoder.set_weights(saveDict['gruEncoder'])
-
-        self.lstm = tf.keras.layers.LSTMCell(units=self.encoderStateSize)
-        self.lstm.build(input_shape=(self.inputDimension,))
         self.lstm.set_weights(saveDict['lstm'])
 
         self.W = tf.Variable(saveDict['W'])
@@ -512,6 +505,14 @@ class ExtremeTime:
             self.memory,
             tf.expand_dims(embedding, axis=1)
         )))
+
+    def buildModel(self):
+
+        self.gruEncoder = tf.keras.layers.GRUCell(self.encoderStateSize)
+        self.gruEncoder.build(input_shape=(self.inputDimension,))
+
+        self.lstm = tf.keras.layers.LSTMCell(self.lstmStateSize)
+        self.lstm.build(input_shape=(self.inputDimension,))
 
     def getInitialLstmStates(self):
         """
