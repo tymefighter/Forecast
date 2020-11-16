@@ -56,12 +56,8 @@ class ExtremeTime:
             logger.log('Building Model Parameters', 1, self.__init__.__name__)
 
             self.lstm = self.gruEncoder = None
+            self.outDense = self.embeddingDense = None
             self.buildModel()
-
-            self.W = tf.Variable(tf.random.normal((1, self.lstmStateSize), dtype=tf.float64))
-            self.A = tf.Variable(
-                tf.random.normal((self.encoderStateSize, self.lstmStateSize), dtype=tf.float64)
-            )
 
             self.b = tf.Variable(0, dtype=tf.float64)
 
@@ -281,8 +277,8 @@ class ExtremeTime:
             'q': self.q,
             'gruEncoder': self.gruEncoder.get_weights(),
             'lstm': self.lstm.get_weights(),
-            'W': self.W.read_value(),
-            'A': self.A.read_value(),
+            'outDense': self.outDense.get_weights(),
+            'embeddingDense': self.embeddingDense.get_weights(),
             'b': self.b.read_value()
         }
 
@@ -324,9 +320,9 @@ class ExtremeTime:
         self.buildModel()
         self.gruEncoder.set_weights(saveDict['gruEncoder'])
         self.lstm.set_weights(saveDict['lstm'])
+        self.outDense.set_weights(saveDict['outDense'])
+        self.embeddingDense.set_weights(saveDict['embeddingDense'])
 
-        self.W = tf.Variable(saveDict['W'])
-        self.A = tf.Variable(saveDict['A'])
         self.b = tf.Variable(saveDict['b'])
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
@@ -369,7 +365,9 @@ class ExtremeTime:
         trainableVars = \
             self.gruEncoder.trainable_variables \
             + self.lstm.trainable_variables \
-            + [self.W, self.A, self.b]
+            + self.outDense.trainable_variables \
+            + self.embeddingDense.trainable_variables \
+            + [self.b]
 
         logger.log('Performing Gradient Descent', 1, self.trainSequence.__name__)
 
@@ -467,19 +465,13 @@ class ExtremeTime:
             lstmStateList
         )[1]
 
-        embedding = tf.squeeze(tf.matmul(
-            self.A,
-            tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
-        ))
+        embedding = tf.squeeze(self.embeddingDense(lstmHiddenState))
         logger.log(f'Embedding Shape: {embedding.shape}', 2, self.predictTimestep.__name__)
 
         attentionWeights = self.computeAttention(embedding)
         logger.log(f'Attention Shape: {attentionWeights.shape}', 2, self.predictTimestep.__name__)
 
-        o1 = tf.squeeze(tf.matmul(
-            self.W,
-            tf.expand_dims(tf.squeeze(lstmHiddenState), axis=1)
-        ))
+        o1 = tf.squeeze(self.outDense(lstmHiddenState))
         logger.log(f'Output1: {o1}', 2, self.predictTimestep.__name__)
 
         o2 = tf.reduce_sum(attentionWeights * self.q)
@@ -513,6 +505,10 @@ class ExtremeTime:
 
         self.lstm = tf.keras.layers.LSTMCell(self.lstmStateSize)
         self.lstm.build(input_shape=(self.inputDimension,))
+
+        self.outDense = tf.keras.layers.Dense(1, input_shape=(self.lstmStateSize,))
+        self.embeddingDense = \
+            tf.keras.layers.Dense(self.encoderStateSize, input_shape=(self.lstmStateSize,))
 
     def getInitialLstmStates(self):
         """
