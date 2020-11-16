@@ -506,9 +506,12 @@ class ExtremeTime:
         self.lstm = tf.keras.layers.LSTMCell(self.lstmStateSize)
         self.lstm.build(input_shape=(self.inputDimension,))
 
-        self.outDense = tf.keras.layers.Dense(1, input_shape=(self.lstmStateSize,))
+        self.outDense = tf.keras.layers.Dense(1)
+        self.outDense.build(input_shape=(self.lstmStateSize,))
+
         self.embeddingDense = \
-            tf.keras.layers.Dense(self.encoderStateSize, input_shape=(self.lstmStateSize,))
+            tf.keras.layers.Dense(self.encoderStateSize)
+        self.embeddingDense.build(input_shape=(self.lstmStateSize,))
 
     def getInitialLstmStates(self):
         """

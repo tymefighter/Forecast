@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 from ts.data.univariate.nonexo import StandardGenerator
@@ -19,20 +20,20 @@ def main():
 
     Plot.plotDataCols(np.expand_dims(targets, axis=1))
 
-    modelSavePath = None  # os.path.expanduser('~/extreme.model')
+    # modelSavePath = os.path.expanduser('~/extreme.model')
+    modelSavePath = None
     model = ExtremeTime(horizon, 10, 10, 10, 10, 0)
 
     losses = model.train(
         trainTargets,
         100,
-        numIterations=3,
+        numIterations=1,
         modelSavePath=modelSavePath,
         verboseLevel=2,
         returnLosses=True
     )
 
     Plot.plotLoss(losses, xlabel='seq')
-
     loss, Ypred = model.evaluate(testTargets, returnPred=True)
 
     print(f'Test Loss Value: {loss}')

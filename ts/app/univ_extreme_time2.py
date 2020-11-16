@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import tensorflow as tf
 
@@ -17,13 +18,14 @@ def main():
 
     Plot.plotDataCols(np.expand_dims(targets, axis=1))
 
-    modelSavePath = None  # os.path.expanduser('~/extreme2.model')
+    # modelSavePath = os.path.expanduser('~/extreme.model')
+    modelSavePath = None
     model = ExtremeTime2(horizon, 10, 10, 20, 20, 0)
 
     losses = model.train(
         trainTargets,
         100,
-        numIterations=5,
+        numIterations=1,
         optimizer=tf.optimizers.Adam(0.3),
         modelSavePath=modelSavePath,
         verboseLevel=2,
@@ -31,8 +33,8 @@ def main():
     )
 
     Plot.plotLoss(losses, xlabel='seq')
-
     loss, Ypred = model.evaluate(trainTargets, returnPred=True)
+
     Ytrue = trainTargets[horizon:]
 
     print(f'Train Loss Value: {loss}')
