@@ -54,17 +54,8 @@ class ExtremeTime2:
 
             logger.log('Building Model Parameters', 1, self.__init__.__name__)
 
-            self.gruInput = tf.keras.layers.GRUCell(self.embeddingSize)
-            self.gruInput.build(input_shape=(self.inputDimension,))
-
-            self.gruMemory = tf.keras.layers.GRUCell(self.embeddingSize)
-            self.gruMemory.build(input_shape=(self.inputDimension,))
-
-            self.gruContext = tf.keras.layers.GRUCell(self.contextSize)
-            self.gruContext.build(input_shape=(self.inputDimension,))
-
-            finalWeightSize = self.embeddingSize + self.contextSize * self.memorySize
-            self.W = tf.Variable(tf.random.normal((1, finalWeightSize), dtype=tf.float64))
+            self.outDense = self.gruContext = self.gruMemory = self.gruInput = None
+            self.buildModel()
 
     def train(
             self,
@@ -276,7 +267,7 @@ class ExtremeTime2:
             'gruInput': self.gruInput.get_weights(),
             'gruMemory': self.gruMemory.get_weights(),
             'gruContext': self.gruContext.get_weights(),
-            'W': self.W.read_value()
+            'outDense': self.outDense.get_weights()
         }
 
         logger.log('Saving Dictionary', 1, self.save.__name__)
@@ -313,19 +304,11 @@ class ExtremeTime2:
         self.memory = saveDict['memory']
         self.context = saveDict['context']
 
-        self.gruInput = tf.keras.layers.GRUCell(units=self.embeddingSize)
-        self.gruInput.build(input_shape=(self.inputDimension,))
+        self.buildModel()
         self.gruInput.set_weights(saveDict['gruInput'])
-
-        self.gruMemory = tf.keras.layers.GRUCell(units=self.embeddingSize)
-        self.gruMemory.build(input_shape=(self.inputDimension,))
         self.gruMemory.set_weights(saveDict['gruMemory'])
-
-        self.gruContext = tf.keras.layers.GRUCell(units=self.contextSize)
-        self.gruContext.build(input_shape=(self.inputDimension,))
         self.gruContext.set_weights(saveDict['gruContext'])
-
-        self.W = tf.Variable(saveDict['W'])
+        self.outDense.set_weights(saveDict['outDense'])
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
         """
@@ -365,7 +348,7 @@ class ExtremeTime2:
             self.gruInput.trainable_variables \
             + self.gruMemory.trainable_variables \
             + self.gruContext.trainable_variables \
-            + [self.W]
+            + self.outDense.trainable_variables
 
         logger.log('Performing Gradient Descent', 1, self.trainSequence.__name__)
 
@@ -481,13 +464,13 @@ class ExtremeTime2:
             tf.expand_dims(attentionWeights, axis=1) * self.context
 
         concatVector = tf.concat([
-            tf.expand_dims(embedding, axis=1),
-            tf.reshape(weightedContext, (tf.size(weightedContext), 1))
+            embedding,
+            tf.reshape(weightedContext, (tf.size(weightedContext),))
         ], axis=0)
 
         logger.log(f'Concat Vector Shape: {concatVector.shape}', 2, self.predictTimestep.__name__)
 
-        pred = tf.squeeze(tf.matmul(self.W, concatVector))
+        pred = tf.squeeze(self.outDense(tf.expand_dims(concatVector, axis=0)))
         logger.log(f'Prediction: {pred}', 2, self.predictTimestep.__name__)
 
         return pred, state
@@ -504,6 +487,21 @@ class ExtremeTime2:
             self.memory,
             tf.expand_dims(embedding, axis=1)
         )))
+
+    def buildModel(self):
+
+        self.gruInput = tf.keras.layers.GRUCell(self.embeddingSize)
+        self.gruInput.build(input_shape=(self.inputDimension,))
+
+        self.gruMemory = tf.keras.layers.GRUCell(self.embeddingSize)
+        self.gruMemory.build(input_shape=(self.inputDimension,))
+
+        self.gruContext = tf.keras.layers.GRUCell(self.contextSize)
+        self.gruContext.build(input_shape=(self.inputDimension,))
+
+        finalWeightSize = self.embeddingSize + self.contextSize * self.memorySize
+        self.outDense = tf.keras.layers.Dense(1)
+        self.outDense.build(input_shape=(finalWeightSize,))
 
     def getInitialState(self):
         """
