@@ -35,6 +35,7 @@ def main():
 
     Plot.plotLoss(losses, xlabel='seq')
 
+    # model = ExtremeTime(modelLoadPath=modelSavePath)
     loss, Ypred = model.evaluate(testTargets, returnPred=True)
 
     print(f'Test Loss Value: {loss}')

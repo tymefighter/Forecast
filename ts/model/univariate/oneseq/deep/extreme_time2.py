@@ -489,6 +489,7 @@ class ExtremeTime2:
         )))
 
     def buildModel(self):
+        """ Build Model Architecture """
 
         self.gruInput = tf.keras.layers.GRUCell(self.embeddingSize)
         self.gruInput.build(input_shape=(self.inputDimension,))

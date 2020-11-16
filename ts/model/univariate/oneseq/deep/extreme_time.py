@@ -59,6 +59,13 @@ class ExtremeTime:
             self.outDense = self.embeddingDense = None
             self.buildModel()
 
+            self.lstmStateList = self.getInitialLstmStates()
+            logger.log(
+                f'LSTM state shapes: {self.lstmStateList[0].shape}, {self.lstmStateList[1].shape}',
+                2,
+                self.predict.__name__
+            )
+
             self.b = tf.Variable(0, dtype=tf.float64)
 
     def train(
@@ -182,15 +189,10 @@ class ExtremeTime:
         X = Utility.prepareDataPred(targetSeries, exogenousSeries)
 
         n = X.shape[0]
-        lstmStateList = self.getInitialLstmStates()
         Ypred = [None] * n
 
-        logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
-                   self.predict.__name__)
-
         for t in range(n):
-            Ypred[t], lstmStateList = \
-                self.predictTimestep(lstmStateList, X, t)
+            Ypred[t] = self.predictTimestep(X, t)
 
         Ypred = np.array(Ypred)
         logger.log(f'Output Shape: {Ypred.shape}', 2, self.predict.__name__)
@@ -276,9 +278,10 @@ class ExtremeTime:
             'memory': self.memory,
             'q': self.q,
             'gruEncoder': self.gruEncoder.get_weights(),
-            'lstm': self.lstm.get_weights(),
+            'lstmStateList': self.lstmStateList,
             'outDense': self.outDense.get_weights(),
             'embeddingDense': self.embeddingDense.get_weights(),
+            'lstm': self.lstm.get_weights(),
             'b': self.b.read_value()
         }
 
@@ -323,6 +326,7 @@ class ExtremeTime:
         self.outDense.set_weights(loadDict['outDense'])
         self.embeddingDense.set_weights(loadDict['embeddingDense'])
 
+        self.lstmStateList = loadDict['lstmStateList']
         self.b = tf.Variable(loadDict['b'])
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
@@ -343,14 +347,10 @@ class ExtremeTime:
 
         with tf.GradientTape() as tape:
             self.buildMemory(X, Y, seqStartTime)
-            lstmStateList = self.getInitialLstmStates()
-
-            logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
-                       self.trainSequence.__name__)
 
             Ypred = []
             for t in range(seqStartTime, seqEndTime + 1):
-                pred, lstmStateList = self.predictTimestep(lstmStateList, X, t)
+                pred = self.predictTimestep(X, t)
                 Ypred.append(pred)
 
             Ypred = tf.convert_to_tensor(Ypred, dtype=tf.float64)
@@ -446,24 +446,23 @@ class ExtremeTime:
 
         return finalState
 
-    def predictTimestep(self, lstmStateList, X, currentTime):
+    def predictTimestep(self, X, currentTime):
         """
         Predict on a Single Timestep
 
-        :param lstmStateList: List of the current two states the LSTM requires
         :param X: Features, has shape (n, self.inputShape)
         :param currentTime: Current Timestep
         :return: The predicted value on current timestep
         """
 
         logger = GlobalLogger.getLogger()
-        logger.log(f'LSTM state shapes: {lstmStateList[0].shape}, {lstmStateList[1].shape}', 2,
-                   self.predictTimestep.__name__)
 
-        [lstmHiddenState, lstmCellState] = self.lstm(
+        self.lstmStateList = self.lstm(
             np.expand_dims(X[currentTime], axis=0),
-            lstmStateList
+            self.lstmStateList
         )[1]
+
+        lstmHiddenState = self.lstmStateList[0]
 
         embedding = tf.squeeze(self.embeddingDense(lstmHiddenState))
         logger.log(f'Embedding Shape: {embedding.shape}', 2, self.predictTimestep.__name__)
@@ -482,7 +481,7 @@ class ExtremeTime:
 
         logger.log(f'Prediction: {pred}', 2, self.predictTimestep.__name__)
 
-        return pred, [lstmHiddenState, lstmCellState]
+        return pred
 
     def computeAttention(self, embedding):
         """
@@ -499,6 +498,7 @@ class ExtremeTime:
         )))
 
     def buildModel(self):
+        """ Build Model Architecture """
 
         self.gruEncoder = tf.keras.layers.GRUCell(self.encoderStateSize)
         self.gruEncoder.build(input_shape=(self.inputDimension,))
