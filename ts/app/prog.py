@@ -1,16 +1,31 @@
 import tensorflow as tf
 
-from ts.model.univariate.multiseq.deep import RnnForecast
-from ts.data.univariate.nonexo import StandardGenerator
 from ts.log import GlobalLogger
+from ts.data.univariate.nonexo import StandardGenerator
+from ts.utility import Utility
+from ts.model.univariate.multiseq.deep import LstmForecast
+from ts.plot import Plot
 
 
 def main():
-    GlobalLogger.getLogger().setLevel(2)
+    data = StandardGenerator('long_term').generate(10500)
+    trainData, testData = Utility.trainTestSplit(data, 10200)
 
-    data = StandardGenerator('simple').generate(100)
-    model = RnnForecast(1, tf.keras.layers.SimpleRNN, 10, 1, 0)
-    model.train([data])
+    Plot.plotDataCols(trainData)
+
+    model = LstmForecast(1, 10, 2)
+    losses = model.train(
+        Utility.breakSeq(trainData, 1000),
+        10,
+        tf.keras.optimizers.Adam(0.7)
+    )
+
+    Plot.plotLoss(losses)
+
+    evalLoss, predTarget = model.evaluate(testData, returnPred=True)
+    trueTarget = testData[1:]
+
+    Plot.plotPredTrue(predTarget, trueTarget)
 
 
 if __name__ == '__main__':
