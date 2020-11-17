@@ -14,9 +14,9 @@ class RnnForecast:
 
     def __init__(
             self,
-            forecastHorizon=1,
-            layerClass=tf.keras.layers.SimpleRNN,
-            stateSize=10,
+            forecastHorizon,
+            layerClass,
+            layerParameters,
             numRnnLayers=1,
             numExoVariables=0,
             modelLoadPath=None
@@ -27,7 +27,7 @@ class RnnForecast:
         :param forecastHorizon: How much further in the future the model has to
         predict the target series variable
         :param layerClass: Class of the layers of the model
-        :param stateSize: Size of the state of each layer
+        :param layerParameters: Parameters of the layer passed as a dictionary
         :param numRnnLayers: Number of RNN based layers of the model
         :param numExoVariables: Number of exogenous variables the model takes as input
         :param modelLoadPath: If specified, then all provided parameters are ignored,
@@ -39,7 +39,7 @@ class RnnForecast:
         else:
             self.forecastHorizon = forecastHorizon
             self.layerClass = layerClass
-            self.stateSize = stateSize
+            self.layerParameters = layerParameters
             self.numRnnLayers = numRnnLayers
             self.inputDimension = numExoVariables + 1
             self.model = None
@@ -195,7 +195,7 @@ class RnnForecast:
         saveDict = {
             'forecastHorizon': self.forecastHorizon,
             'layerClass': self.layerClass,
-            'stateSize': self.stateSize,
+            'layerParameters': self.layerParameters,
             'numRnnLayers': self.numRnnLayers,
             'inputDimension': self.inputDimension,
             'weights': self.model.get_weights()
@@ -226,7 +226,7 @@ class RnnForecast:
 
         self.forecastHorizon = loadDict['forecastHorizon']
         self.layerClass = loadDict['layerClass']
-        self.stateSize = loadDict['stateSize']
+        self.layerParameters = loadDict['layerParameters']
         self.numRnnLayers = loadDict['numRnnLayers']
         self.inputDimension = loadDict['inputDimension']
 
@@ -247,10 +247,7 @@ class RnnForecast:
         self.model = tf.keras.Sequential()
 
         for i in range(self.numRnnLayers):
-            self.model.add(self.layerClass(
-                units=self.stateSize,
-                return_sequences=True
-            ))
+            self.model.add(self.layerClass(**self.layerParameters))
 
         self.model.add(tf.keras.layers.Dense(1, activation=None))
         self.model.build(input_shape=(None, None, self.inputDimension))
