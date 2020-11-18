@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 from ts.data.univariate.nonexo import StandardGenerator
-from ts.model.univariate.oneseq.deep import ExtremeTime2
+from ts.model.special import ExtremeTime2
 from ts.plot import Plot
 from ts.log import GlobalLogger
 

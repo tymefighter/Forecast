@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from ts.model.univariate.multiseq.deep import LstmForecast
+from ts.model.univariate import LstmForecast
 from ts.data.univariate.nonexo import StandardGenerator
 from ts.log import GlobalLogger
 
