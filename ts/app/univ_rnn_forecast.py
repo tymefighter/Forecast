@@ -1,7 +1,7 @@
 import os
 import tensorflow as tf
 
-from ts.data.univariate.nonexo import StandardGenerator
+from ts.data.generate.univariate.nonexo import StandardGenerator
 from ts.model.univariate import SimpleRnnForecast
 from ts.plot import Plot
 from ts.utility import Utility

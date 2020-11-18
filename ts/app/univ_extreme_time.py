@@ -1,7 +1,6 @@
-import os
 import numpy as np
 
-from ts.data.univariate.nonexo import StandardGenerator
+from ts.data.generate.univariate.nonexo import StandardGenerator
 from ts.model.special import ExtremeTime
 from ts.plot import Plot
 from ts.log import GlobalLogger
