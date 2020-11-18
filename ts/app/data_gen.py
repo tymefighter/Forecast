@@ -5,26 +5,15 @@ from ts.plot.static_plot import Plot
 
 
 def main():
-    n = 50
+    n = 500
 
-    dataGen = StandardGenerator()
-    Plot.plotDataCols(dataGen.generate(n))
+    data = StandardGenerator('extreme_short').generate(n)
+    Plot.plotDataCols(data)
 
-    dataGen = PeriodicGenerator()
-    Plot.plotDataCols(dataGen.generate(n))
+    data = StandardGenerator('extreme_long').generate(n)
+    Plot.plotDataCols(data)
 
-    dataGen = PolynomialGenerator()
-    Plot.plotDataCols(dataGen.generate(n))
-
-    dataGen = DifficultGenerator()
-    Plot.plotDataCols(dataGen.generate(n))
-
-    data = np.stack([
-        dataGen.generate(n),
-        dataGen.generate(n),
-        dataGen.generate(n)
-    ], axis=1)
-
+    data = StandardGenerator('long_term').generate(n)
     Plot.plotDataCols(data)
 
 

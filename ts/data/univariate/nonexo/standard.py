@@ -33,35 +33,35 @@ class StandardGenerator(UnivariateNonExogenous):
             noiseCoef = np.array([0.5, -0.2])
 
             noiseGenFunc = np.random.normal
-            noiseGenParams = (0.0, 1.0)
+            noiseGenParams = (10.0, 1.0)
 
         elif typeOfData == 'long_term':
             obsCoef, noiseCoef = \
                 StandardGenerator.generateRandomArmaCoeff(50, 50)
 
             noiseGenFunc = np.random.normal
-            noiseGenParams = (0.0, 1.0)
+            noiseGenParams = (10.0, 1.0)
 
         elif typeOfData == 'extreme_short':
             obsCoef, noiseCoef = \
                 StandardGenerator.generateRandomArmaCoeff(5, 5)
 
-            noiseGenFunc = np.random.gumbel
-            noiseGenParams = (-5., 10.0)
+            noiseGenFunc = np.random.lognormal
+            noiseGenParams = (1.0, 1.0)
 
         elif typeOfData == 'extreme_long':
             obsCoef, noiseCoef = \
                 StandardGenerator.generateRandomArmaCoeff(50, 50)
 
-            noiseGenFunc = np.random.gumbel
-            noiseGenParams = (-5., 10.0)
+            noiseGenFunc = np.random.lognormal
+            noiseGenParams = (1.0, 1.0)
 
         elif typeOfData == 'extreme_different':
             obsCoef, noiseCoef = \
                 StandardGenerator.generateRandomArmaCoeff(5, 5)
 
-            noiseGenFunc = np.random.lognormal
-            noiseGenParams = (0.0, 1.0)
+            noiseGenFunc = np.random.gumbel
+            noiseGenParams = (-5., 10.0)
 
         else:
             raise Exception("Invalid Type of Data")
