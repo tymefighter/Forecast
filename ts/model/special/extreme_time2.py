@@ -129,7 +129,7 @@ class ExtremeTime2:
                 verbose.log(f'start timestep: {seqStartTime}'
                             + f' | end timestep: {seqEndTime}'
                             + f' | time taken: {timeTaken : .2f} sec'
-                            + f' | Loss: {loss}', 1)
+                            + f' | Loss: {loss}', 2)
 
                 seqStartTime += sequenceLength
 

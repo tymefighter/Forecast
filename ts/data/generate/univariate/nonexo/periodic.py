@@ -1,6 +1,6 @@
 import numpy as np
 
-from ts.data.univariate.nonexo.non_exo import UnivariateNonExogenous
+from ts.data.generate.univariate.nonexo.non_exo import UnivariateNonExogenous
 from ts.log import GlobalLogger
 
 

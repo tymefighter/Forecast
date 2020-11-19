@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from ts.model.univariate.multiseq.deep import RnnForecast
+from ts.model.univariate.rnn_forecast import RnnForecast
 
 
 class LstmForecast(RnnForecast):
@@ -10,6 +10,7 @@ class LstmForecast(RnnForecast):
             self,
             forecastHorizon=1,
             stateSize=10,
+            activation='tanh',
             numRnnLayers=1,
             numExoVariables=0,
             modelLoadPath=None
@@ -20,16 +21,23 @@ class LstmForecast(RnnForecast):
         :param forecastHorizon: How much further in the future the model has to
         predict the target series variable
         :param stateSize: Size of the state of each LSTM layer
+        :param activation: Activation function to use
         :param numRnnLayers: Number of LSTM layers of the model
         :param numExoVariables: Number of exogenous variables the model takes as input
         :param modelLoadPath: If specified, then all provided parameters are ignored,
         and the model is loaded from the path
         """
 
+        lstmParam = {
+            'units': stateSize,
+            'activation': activation,
+            'return_sequences': True
+        }
+
         super().__init__(
             forecastHorizon,
             tf.keras.layers.LSTM,
-            stateSize,
+            lstmParam,
             numRnnLayers,
             numExoVariables,
             modelLoadPath
