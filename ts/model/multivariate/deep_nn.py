@@ -115,7 +115,7 @@ class DeepNN:
         )
 
         logger.log('Begin Evaluation', 1, self.predict.__name__)
-        Ypred = tf.squeeze(self.model.predict(np.expand_dims(X, axis=0), verbose=0))
+        Ypred = self.model.predict(X, verbose=0)
 
         assert (Ytrue.shape == Ypred.shape)
 
@@ -180,7 +180,7 @@ class DeepNN:
             self.buildModel.__name__
         )
 
-        inputDimension = (self.numExoVariables + self.numTargetVariables) * self.lag
+        inputDimension = (self.numExoVariables + self.numTargetVariables) * (self.lag + 1)
 
         self.model = tf.keras.Sequential()
         for i in range(self.numLayers):
@@ -216,8 +216,8 @@ class DeepNN:
         X = []
 
         for i in range(lag, Xtemp.shape[0]):
-            vecLen = lag * Xtemp.shape[1]
-            vec = np.reshape(Xtemp[i - lag + 1: i + 1, :], (vecLen,))
+            vecLen = (lag + 1) * Xtemp.shape[1]
+            vec = np.reshape(Xtemp[i - lag: i + 1, :], (vecLen,))
             X.append(vec)
 
         X = np.array(X)
@@ -241,8 +241,8 @@ class DeepNN:
         Y = Ytemp[lag:]
 
         for i in range(lag, Xtemp.shape[0]):
-            vecLen = lag * Xtemp.shape[1]
-            vec = np.reshape(Xtemp[i - lag + 1: i + 1, :], (vecLen,))
+            vecLen = (lag + 1) * Xtemp.shape[1]
+            vec = np.reshape(Xtemp[i - lag: i + 1, :], (vecLen,))
             X.append(vec)
 
         X = np.array(X)
