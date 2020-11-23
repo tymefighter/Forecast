@@ -108,7 +108,7 @@ def main():
     # The data generator
     dataGenerator = StandardGenerator('long_term')
 
-    # Data for multi-sequence methods
+    # Data for single-sequence methods
     n = 21500
     trainN = 21000
     trainData, testData = Utility.trainTestSplit(
@@ -138,7 +138,7 @@ def main():
     trainSequences = [trainData]
     tryModelOneSeq(trainSequences, testData, 'method3', PLOT_DIR)
 
-    # Multiple Train Sequences
+    # Multiple Independent Train Sequences
     seqLength = 500
     numSeq = 42
     trainSequences = Utility.generateMultipleSequence(
