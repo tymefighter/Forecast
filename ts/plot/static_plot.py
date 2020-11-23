@@ -7,7 +7,13 @@ class Plot:
     """Static Plotting Class"""
 
     @staticmethod
-    def plotDataCols(X, colNames=None, title='Data Plot'):
+    def plotDataCols(
+            X,
+            colNames=None,
+            title='Data Plot',
+            savePath=None,
+            saveOnly=False
+    ):
         """
         Plots each column of X as a time series in a subplot
 
@@ -16,8 +22,15 @@ class Plot:
         :param colNames: Names of each column. If it is not None, then this would
         be present as the subplot title for that column
         :param title: Title of the entire plot
+        :param savePath: If None, then does not save the plot, else saves the plot
+        at the location provided
+        :param saveOnly: Can be set to True only if savePath is not None. If True,
+        then only saves the plot i.e. it does not plot it, If False, then it does
+        will plot the figure
         :return: None
         """
+
+        assert (savePath is not None or saveOnly)
 
         matplotlib.use('TkAgg')
 
@@ -40,10 +53,24 @@ class Plot:
                     ax.set_title(colNames[dim])
 
         fig.suptitle(title)
-        plt.show()
+
+        if savePath is not None:
+            plt.savefig(savePath)
+
+        if not saveOnly:
+            plt.show()
+        else:
+            plt.close()
 
     @staticmethod
-    def plotLoss(loss, title='Loss Plot', xlabel='Iterations', ylabel='Loss'):
+    def plotLoss(
+            loss,
+            title='Loss Plot',
+            xlabel='Iterations',
+            ylabel='Loss',
+            savePath=None,
+            saveOnly=False
+    ):
         """
         Plots Loss vs Iterations Curve
 
@@ -52,8 +79,15 @@ class Plot:
         :param title: Title of the plot
         :param xlabel: x-axis Label of the plot
         :param ylabel: y-axis Label of the plot
+        :param savePath: If None, then does not save the plot, else saves the plot
+        at the location provided
+        :param saveOnly: Can be set to True only if savePath is not None. If True,
+        then only saves the plot i.e. it does not plot it, If False, then it does
+        will plot the figure
         :return: None
         """
+
+        assert (savePath is not None or saveOnly)
 
         matplotlib.use('TkAgg')
 
@@ -61,10 +95,25 @@ class Plot:
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.show()
+
+        if savePath is not None:
+            plt.savefig(savePath)
+
+        if not saveOnly:
+            plt.show()
+        else:
+            plt.close()
 
     @staticmethod
-    def plotPredTrue(pred, target, title='Pred and True', xlabel='Timestep', ylabel='Value'):
+    def plotPredTrue(
+            pred,
+            target,
+            title='Pred and True',
+            xlabel='Timestep',
+            ylabel='Value',
+            savePath=None,
+            saveOnly=False
+    ):
         """
         Plot Predictions and True Targets
 
@@ -73,8 +122,15 @@ class Plot:
         :param title: Title of the plot
         :param xlabel: x-axis Label of the plot
         :param ylabel: y-axis Label of the plot
+        :param savePath: If None, then does not save the plot, else saves the plot
+        at the location provided
+        :param saveOnly: Can be set to True only if savePath is not None. If True,
+        then only saves the plot i.e. it does not plot it, If False, then it does
+        will plot the figure
         :return: None
         """
+
+        assert (savePath is not None or not saveOnly)
 
         matplotlib.use('TkAgg')
 
@@ -84,4 +140,11 @@ class Plot:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.legend()
-        plt.show()
+
+        if savePath is not None:
+            plt.savefig(savePath)
+
+        if not saveOnly:
+            plt.show()
+        else:
+            plt.close()
