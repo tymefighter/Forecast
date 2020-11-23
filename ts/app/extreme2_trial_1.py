@@ -17,11 +17,6 @@ def main():
         trainN
     )
 
-    # for i in range(numSeqPlot):
-    #     Plot.plotDataCols(trainSequences[
-    #         np.random.randint(0, len(trainSequences))
-    #     ])
-
     model = ExtremeTime2(
         forecastHorizon=1,
         memorySize=5,
