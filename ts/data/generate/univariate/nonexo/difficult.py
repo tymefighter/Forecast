@@ -1,7 +1,7 @@
-from ts.data.univariate.nonexo.non_exo import UnivariateNonExogenous
-from ts.data.univariate.nonexo.standard import StandardGenerator
-from ts.data.univariate.nonexo.periodic import PeriodicGenerator
-from ts.data.univariate.nonexo.polynomial import PolynomialGenerator
+from ts.data.generate.univariate.nonexo.non_exo import UnivariateNonExogenous
+from ts.data.generate.univariate.nonexo.standard import StandardGenerator
+from ts.data.generate.univariate.nonexo.periodic import PeriodicGenerator
+from ts.data.generate.univariate.nonexo.polynomial import PolynomialGenerator
 from ts.log import GlobalLogger
 
 

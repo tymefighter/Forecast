@@ -129,7 +129,7 @@ class ExtremeTime2:
                 verbose.log(f'start timestep: {seqStartTime}'
                             + f' | end timestep: {seqEndTime}'
                             + f' | time taken: {timeTaken : .2f} sec'
-                            + f' | Loss: {loss}', 1)
+                            + f' | Loss: {loss}', 2)
 
                 seqStartTime += sequenceLength
 
@@ -161,7 +161,7 @@ class ExtremeTime2:
         """
         Forecast using the model parameters on the provided input data
         :param targetSeries: Univariate Series of the Target Variable, it
-        should be a numpy array of shape (n + self.forecastHorizon,)
+        should be a numpy array of shape (n,)
         :param exogenousSeries: Series of exogenous Variables, it should be a
         numpy array of shape (n, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not

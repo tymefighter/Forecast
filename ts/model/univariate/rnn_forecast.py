@@ -2,7 +2,7 @@ import pickle
 import tensorflow as tf
 import numpy as np
 
-from ts.utility import Utility, ForecastDataSequence
+from ts.utility import Utility, ForecastDataSequence, SaveCallback
 from ts.log import GlobalLogger
 
 
@@ -106,7 +106,7 @@ class RnnForecast:
         Forecast using the model parameters on the provided input data
 
         :param targetSeries: Univariate Series of the Target Variable, it
-        should be a numpy array of shape (n + self.forecastHorizon,)
+        should be a numpy array of shape (n,)
         :param exogenousSeries: Series of exogenous Variables, it should be a
         numpy array of shape (n, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not
@@ -241,7 +241,7 @@ class RnnForecast:
         GlobalLogger.getLogger().log(
             'Building Model Architecture',
             1,
-            self.__init__.__name__
+            self.buildModel.__name__
         )
 
         self.model = tf.keras.Sequential()
@@ -251,31 +251,3 @@ class RnnForecast:
 
         self.model.add(tf.keras.layers.Dense(1, activation=None))
         self.model.build(input_shape=(None, None, self.inputDimension))
-
-
-class SaveCallback(tf.keras.callbacks.Callback):
-    """ Class to save model after each epoch """
-
-    def __init__(self, rnnForecastModel, modelSavePath):
-        """
-        Initialize SaveCallback Class Members
-
-        :param rnnForecastModel: The forecasting model itself
-        :param modelSavePath: Path where to save the model
-        """
-
-        super().__init__()
-        self.rnnForecastModel = rnnForecastModel
-        self.modelSavePath = modelSavePath
-
-    def on_epoch_end(self, epoch, logs=None):
-        """
-        Saves the model at the path provided at initialization
-
-        :param epoch: Number of the epoch which has just ended
-        :param logs: metric results for this training epoch, and for the validation
-        epoch if validation is performed (tensorflow docs)
-        :return: None
-        """
-
-        self.rnnForecastModel.save(self.modelSavePath)

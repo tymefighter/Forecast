@@ -49,10 +49,10 @@ class Utility:
         tuple is a target series part, and second is a exogenous series part
         """
 
-        assert (targetSeries.shape[0] == exogenousSeries.shape[0])
-
         if exogenousSeries is None:
             return Utility.breakSeq(targetSeries, seqLength)
+        else:
+            assert (targetSeries.shape[0] == exogenousSeries.shape[0])
 
         targetSequences = Utility.breakSeq(targetSeries, seqLength)
         exoSequences = Utility.breakSeq(exogenousSeries, seqLength)
@@ -168,6 +168,16 @@ class Utility:
 
     @staticmethod
     def isExoShapeValid(exogenousSeries, numExoVariables):
+        """
+        Checks if exogenous series shape is valid
+
+        :param exogenousSeries: The exogenous variables time series, it can be
+        None or it is a numpy array of shape (n, d)
+        :param numExoVariables: Number of exogenous variables
+        :return: If numExogenousVariables is 0, then the exogenous series should
+        be None, else d must be numExoVariables. If this is satified then returns
+        True, else returns False
+        """
 
         if numExoVariables == 0:
             return exogenousSeries is None
@@ -176,3 +186,34 @@ class Utility:
                 exogenousSeries is not None \
                 and \
                 exogenousSeries.shape[1] == numExoVariables
+
+    @staticmethod
+    def generateMultipleSequence(
+            dataGenerator,
+            numSequences,
+            minSequenceLength,
+            maxSequenceLength
+    ):
+        """
+        Generates multiple sequences using the provided data generator
+
+        :param dataGenerator: The data generator
+        :param numSequences: Number of sequences to generate
+        :param minSequenceLength: Minimum sequence length - lower bound
+        on the sequence length
+        :param maxSequenceLength: Maximum sequence length - upper bound
+        on the sequence length
+        :return: List of generated sequences satisfying the conditions
+        provided in the input
+        """
+
+        assert (minSequenceLength <= maxSequenceLength)
+
+        return [
+            dataGenerator.generate(seqLength)
+            for seqLength in list(np.random.randint(
+                low=minSequenceLength,
+                high=maxSequenceLength + 1,
+                size=(numSequences,)
+            ))
+        ]
