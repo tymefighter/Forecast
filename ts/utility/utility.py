@@ -49,10 +49,10 @@ class Utility:
         tuple is a target series part, and second is a exogenous series part
         """
 
-        assert (targetSeries.shape[0] == exogenousSeries.shape[0])
-
         if exogenousSeries is None:
             return Utility.breakSeq(targetSeries, seqLength)
+        else:
+            assert (targetSeries.shape[0] == exogenousSeries.shape[0])
 
         targetSequences = Utility.breakSeq(targetSeries, seqLength)
         exoSequences = Utility.breakSeq(exogenousSeries, seqLength)
