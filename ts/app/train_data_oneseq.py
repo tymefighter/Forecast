@@ -5,7 +5,7 @@ from ts.utility import Utility
 from ts.model.univariate import LstmForecast
 from ts.plot import Plot
 
-PLOT_DIR = '/Users/ahmed/Programming/Project/image'
+PLOT_DIR = '/Users/ahmed/Programming/Project/image/img'
 
 
 def tryModelOneSeq(trainSequences, testData, plotPrefix, plotDir):
@@ -48,12 +48,20 @@ def tryModelOneSeq(trainSequences, testData, plotPrefix, plotDir):
             saveOnly=True
         )
 
-    evalLoss, Ypred = model.evaluate(testData, returnPred=True)
+    testLoss, Ypred = model.evaluate(testData, returnPred=True)
     Ytrue = testData[1:]
-    print(f'Test Eval Loss: {evalLoss}')
+    print(f'Test Eval Loss: {testLoss}')
 
     plotPath = plotDir + f'/{plotPrefix}_test.png'
     Plot.plotPredTrue(Ypred, Ytrue, 'Test Data', savePath=plotPath, saveOnly=True)
+
+    lossPath = plotDir + f'/{plotPrefix}_loss'
+    fl = open(lossPath, 'w')
+    fl.write(
+        f'Final Train Loss: {loss[-1]}\n'
+        + f'Test Loss: {testLoss}'
+    )
+    fl.close()
 
 
 def tryModelMultiSeq(trainSequences, testData, plotPrefix, plotDir):
@@ -96,12 +104,20 @@ def tryModelMultiSeq(trainSequences, testData, plotPrefix, plotDir):
             saveOnly=True
         )
 
-    evalLoss, Ypred = model.evaluate(testData, returnPred=True)
+    testLoss, Ypred = model.evaluate(testData, returnPred=True)
     Ytrue = testData[1:]
-    print(f'Test Eval Loss: {evalLoss}')
+    print(f'Test Eval Loss: {testLoss}')
 
     plotPath = plotDir + f'/{plotPrefix}_test.png'
     Plot.plotPredTrue(Ypred, Ytrue, 'Test Data', savePath=plotPath, saveOnly=True)
+
+    lossPath = plotDir + f'/{plotPrefix}_loss'
+    fl = open(lossPath, 'w')
+    fl.write(
+        f'Final Train Loss: {loss[-1]}\n'
+        + f'Test Loss: {testLoss}'
+    )
+    fl.close()
 
 
 def main():
