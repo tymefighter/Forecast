@@ -5,10 +5,11 @@ from ts.utility import Utility
 from ts.model.special import ExtremeTime, ExtremeTime2
 from ts.plot import Plot
 
-PLOT_DIR = '/Users/ahmed/Programming/Project/image'
+PLOT_DIR = '/Users/ahmed/Programming/Project/image/img'
 
 
 def evaluateAndPlot(
+        loss,
         model,
         trainData,
         testData,
@@ -17,6 +18,8 @@ def evaluateAndPlot(
         plotPrefix,
         plotDir
 ):
+    plotPath = plotDir + f'/{plotPrefix}_loss.png'
+    Plot.plotLoss(loss, savePath=plotPath, saveOnly=True)
 
     for i in range(numTrainSeqPlot):
         idx = np.random.randint(0, trainData.shape[0] - trainPlotSeqLength)
@@ -29,12 +32,20 @@ def evaluateAndPlot(
         plotPath = plotDir + f'/{plotPrefix}_train{i}.png'
         Plot.plotPredTrue(Ypred, Ytrue, 'Train Data', savePath=plotPath, saveOnly=True)
 
-    evalLoss, Ypred = model.evaluate(testData, returnPred=True)
+    testLoss, Ypred = model.evaluate(testData, returnPred=True)
     Ytrue = testData[1:]
-    print(f'Test Eval Loss: {evalLoss}')
+    print(f'Test Eval Loss: {testLoss}')
 
     plotPath = plotDir + f'/{plotPrefix}_test.png'
     Plot.plotPredTrue(Ypred, Ytrue, 'Test Data', savePath=plotPath, saveOnly=True)
+
+    lossPath = plotDir + f'/{plotPrefix}_loss'
+    fl = open(lossPath, 'w')
+    fl.write(
+        f'Final Train Loss: {loss[-1]}\n'
+        + f'Test Loss: {testLoss}'
+    )
+    fl.close()
 
 
 def tryExtreme1(trainData, testData, seqLength, plotPrefix, plotDir):
@@ -62,11 +73,9 @@ def tryExtreme1(trainData, testData, seqLength, plotPrefix, plotDir):
         returnLosses=True
     )
 
-    plotPath = plotDir + f'/{plotPrefix}_loss.png'
-    Plot.plotLoss(loss, savePath=plotPath, saveOnly=True)
-
     numTrainSeqPlot = 5
     evaluateAndPlot(
+        loss,
         model,
         trainData,
         testData,
@@ -102,11 +111,9 @@ def tryExtreme2(trainData, testData, seqLength, plotPrefix, plotDir):
         returnLosses=True
     )
 
-    plotPath = plotDir + f'/{plotPrefix}_loss.png'
-    Plot.plotLoss(loss, savePath=plotPath, saveOnly=True)
-
     numTrainSeqPlot = 5
     evaluateAndPlot(
+        loss,
         model,
         trainData,
         testData,
