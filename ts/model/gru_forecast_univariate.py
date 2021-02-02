@@ -1,10 +1,10 @@
 import tensorflow as tf
 
-from ts.model.univariate.rnn_forecast import RnnForecast
+from ts.model.rnn_forecast_univariate import RnnForecastUnivariate
 
 
-class SimpleRnnForecast(RnnForecast):
-    """ Simple RNN forecasting model """
+class GruForecastUnivariate(RnnForecastUnivariate):
+    """ GRU univariate forecasting model """
 
     def __init__(
             self,
@@ -16,11 +16,11 @@ class SimpleRnnForecast(RnnForecast):
             modelLoadPath=None
     ):
         """
-        Initialize Simple RNN Forecasting model using the given parameters
+        Initialize GRU Forecasting model using the given parameters
 
         :param forecastHorizon: How much further in the future the model has to
         predict the target series variable
-        :param stateSize: Size of the state of each Simple RNN layer
+        :param stateSize: Size of the state of each GRU layer
         :param activation: Activation function to use
         :param numRnnLayers: Number of GRU layers of the model
         :param numExoVariables: Number of exogenous variables the model takes as input
@@ -28,7 +28,7 @@ class SimpleRnnForecast(RnnForecast):
         and the model is loaded from the path
         """
 
-        simpleRnnParam = {
+        gruParam = {
             'units': stateSize,
             'activation': activation,
             'return_sequences': True
@@ -36,8 +36,8 @@ class SimpleRnnForecast(RnnForecast):
 
         super().__init__(
             forecastHorizon,
-            tf.keras.layers.SimpleRNN,
-            simpleRnnParam,
+            tf.keras.layers.GRU,
+            gruParam,
             numRnnLayers,
             numExoVariables,
             modelLoadPath

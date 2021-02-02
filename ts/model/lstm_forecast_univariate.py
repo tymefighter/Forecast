@@ -1,10 +1,10 @@
 import tensorflow as tf
 
-from ts.model.univariate.rnn_forecast import RnnForecast
+from ts.model.rnn_forecast_univariate import RnnForecastUnivariate
 
 
-class LstmForecast(RnnForecast):
-    """ LSTM forecasting model """
+class LstmForecastUnivariate(RnnForecastUnivariate):
+    """ LSTM univariate forecasting model """
 
     def __init__(
             self,

@@ -6,9 +6,9 @@ from ts.utility import Utility, ForecastDataSequence, SaveCallback
 from ts.log import GlobalLogger
 
 
-class RnnForecast:
+class RnnForecastUnivariate:
     """
-    RNN based forecasting model which allows for any layer to
+    RNN based univariate forecasting model which allows for any layer to
     be provided as input
     """
 
