@@ -30,9 +30,7 @@ class Plot:
         :return: None
         """
 
-        assert (savePath is not None or saveOnly)
-
-        matplotlib.use('TkAgg')
+        assert (savePath is None or (savePath is not None and saveOnly))
 
         if len(X.shape) == 1:
             d = 1
@@ -87,9 +85,7 @@ class Plot:
         :return: None
         """
 
-        assert (savePath is not None or saveOnly)
-
-        matplotlib.use('TkAgg')
+        assert (savePath is None or (savePath is not None and saveOnly))
 
         plt.plot(loss)
         plt.title(title)
@@ -130,9 +126,7 @@ class Plot:
         :return: None
         """
 
-        assert (savePath is not None or not saveOnly)
-
-        matplotlib.use('TkAgg')
+        assert (savePath is None or (savePath is not None and saveOnly))
 
         plt.plot(target, 'r', label='true')
         plt.plot(pred, 'b', label='pred')
