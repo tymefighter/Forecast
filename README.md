@@ -25,28 +25,28 @@ from ts.model import DeepNN
     recurrent layer (and parameters) and stacks it required number of times.
 
 ```
-from ts.model import RnnForecast
+from ts.model import RnnForecastUnivariate
 ```
 
 -   Simple RNN based univariate forecasting algorithm with support for multivariate 
     exogenous time series. This model is built by stacking multiple simple RNN layers.
 
 ```
-from ts.model import SimpleRnnForecast
+from ts.model import SimpleRnnForecastUnivariate
 ```
 
 -   GRU based univariate forecasting algorithm with support for multivariate 
     exogenous time series. This model is built by stacking multiple GRU layers.
 
 ```
-from ts.model import GruForecast
+from ts.model import GruForecastUnivariate
 ```
 
 -   LSTM based univariate forecasting algorithm with support for multivariate 
     exogenous time series. This model is built by stacking multiple LSTM layers.
 
 ```
-from ts.model import LstmForecast
+from ts.model import LstmForecastUnivariate
 ```
 
 -   The Extreme Time Model - which focuses on forecasting target series with
@@ -139,10 +139,10 @@ ts/
 |                  |__ DifficultGenerator
 | 
 |__ model/
-|    |__ RnnForecast
-|    |__ SimpleRnnForecast
-|    |__ GruForecast
-|    |__ LstmForecast
+|    |__ RnnForecastUnivariate
+|    |__ SimpleRnnForecastUnivariate
+|    |__ GruForecastUnivariate
+|    |__ LstmForecastUnivariate
 |    |__ DeepNN
 |    |__ ExtremeTime
 |    |__ ExtremeTime2
