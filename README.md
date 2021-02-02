@@ -17,7 +17,7 @@ Currently, this package provides the following Forecasting Algorithms,
     doing as follows
 
 ```
-from ts.model.multivariate import DeepNN
+from ts.model import DeepNN
 ```
 
 -   RNN based univariate forecasting algorithm with support for multivariate 
@@ -25,28 +25,28 @@ from ts.model.multivariate import DeepNN
     recurrent layer (and parameters) and stacks it required number of times.
 
 ```
-from ts.model.univariate import RnnForecast
+from ts.model import RnnForecastUnivariate
 ```
 
 -   Simple RNN based univariate forecasting algorithm with support for multivariate 
     exogenous time series. This model is built by stacking multiple simple RNN layers.
 
 ```
-from ts.model.univariate import SimpleRnnForecast
+from ts.model import SimpleRnnForecastUnivariate
 ```
 
 -   GRU based univariate forecasting algorithm with support for multivariate 
     exogenous time series. This model is built by stacking multiple GRU layers.
 
 ```
-from ts.model.univariate import GruForecast
+from ts.model import GruForecastUnivariate
 ```
 
 -   LSTM based univariate forecasting algorithm with support for multivariate 
     exogenous time series. This model is built by stacking multiple LSTM layers.
 
 ```
-from ts.model.univariate import LstmForecast
+from ts.model import LstmForecastUnivariate
 ```
 
 -   The Extreme Time Model - which focuses on forecasting target series with
@@ -55,7 +55,7 @@ from ts.model.univariate import LstmForecast
     exogenous time series.
 
 ```
-from ts.model.special import ExtremeTime
+from ts.model import ExtremeTime
 ```
 
 -   The Extreme Time Model 2 - It is another model focussed on forecasting
@@ -63,7 +63,7 @@ from ts.model.special import ExtremeTime
     multivariate exogenous time series.
 
 ```
-from ts.model.special import ExtremeTime2
+from ts.model import ExtremeTime2
 ```
 
 ## Forecasting Data
@@ -139,18 +139,13 @@ ts/
 |                  |__ DifficultGenerator
 | 
 |__ model/
-|    |__ univariate/
-|         |__ RnnForecast
-|         |__ SimpleRnnForecast
-|         |__ GruForecast
-|         |__ LstmForecast
-|
-|    |__ multivariate/
-|         |__ DeepNN
-|
-|    |__ special/
-|         |__ ExtremeTime
-|         |__ ExtremeTime2
+|    |__ RnnForecastUnivariate
+|    |__ SimpleRnnForecastUnivariate
+|    |__ GruForecastUnivariate
+|    |__ LstmForecastUnivariate
+|    |__ DeepNN
+|    |__ ExtremeTime
+|    |__ ExtremeTime2
 |
 |__ plot/
 |    |__ Plot
