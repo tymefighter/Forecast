@@ -164,6 +164,41 @@ ts/
 |    |__ Utility
 |    |__ ForecastDataSequence
 |    |__ SaveCallback
-|
-|__ app/..
 ```
+
+## Repository Structure
+
+This repository is structured as follows:
+
+```
+Forecast
+|__ other/...
+|
+|__ notebooks/..
+|
+|__ ts/...
+```
+
+- `other`:  contains deprecated codes and codes that do not work.
+    The contents of this directory would be removed as soon as
+    they have been analyzed thoroughly.
+
+- `notebooks`: contains notebooks containing experiments, tests and examples
+
+- `ts`: The time series forecasting package
+
+## Existing experiments, tests and example notebooks
+
+The `notebooks` directory of this repository contains notebooks
+containing experiments, tests and examples. To be able to run
+these notebooks, we need to do as follows:
+
+1. Go to your .bashrc file and add the following line:
+```
+export PYTHONPATH="$PYTHONPATH:<location_of_this_repository>"
+```
+
+where `<location_of_this_repository>` is the location of this repository
+in your filesystem.
+
+
