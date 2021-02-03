@@ -73,7 +73,9 @@ class RnnForecastUnivariate:
         logger = GlobalLogger.getLogger()
         logger.log('Compiling Model', 1, self.train.__name__)
 
-        self.model.compile(optimizer=optimizer, loss=tf.keras.losses.MSE)
+        self.model.compile(
+            optimizer=optimizer, loss=tf.keras.losses.MeanSquaredError()
+        )
 
         callbacks = None
         if modelSavePath is not None:
@@ -249,5 +251,7 @@ class RnnForecastUnivariate:
         for i in range(self.numRnnLayers):
             self.model.add(self.layerClass(**self.layerParameters))
 
-        self.model.add(tf.keras.layers.Dense(1, activation=None))
+        self.model.add(
+            tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1, activation=None))
+        )
         self.model.build(input_shape=(None, None, self.inputDimension))

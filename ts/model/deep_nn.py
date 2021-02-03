@@ -62,8 +62,8 @@ class DeepNN:
 
         :param trainSequences: Sequences (List) of data, each element in the
         list is a target sequence of shape (n1, numTargetVariables) or a tuple
-        containing a target sequence of shape (n1, numTargetVariables) and an
-        exogenous sequence of shape (n1, numExoVariables)
+        containing a target sequence of shape (n1 + forecastHorizon, numTargetVariables)
+        and an exogenous sequence of shape (n1, numExoVariables)
         :param numIterations: Number of iterations of training to be performed
         :param optimizer: Optimizer using which to train the parameters of the model
         :param modelSavePath: If not None, then save the model to this path after
