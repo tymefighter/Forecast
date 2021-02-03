@@ -33,7 +33,7 @@ class Utility:
         return dataSeq
 
     @staticmethod
-    def breakTrainSeq(targetSeries, exogenousSeries, seqLength):
+    def breakTrainSeq(targetSeries, exogenousSeries, seqLength, forecastHorizon=None):
         """
         Break Target Series and Exogenous Series into a training list of
         sequences which is required by models which train on multiple sequences
@@ -43,21 +43,39 @@ class Utility:
         None, then it has shape (n, d2)
         :param seqLength: The length of each broken sequence in the returned list
         of sequences
+        :param forecastHorizon: The forecast horizon, it's not used when
+        exogenousSeries is None (hence can be None), else it cannot be Nones
         :return: If exogenous series is None, then breaks the target series and
         returns a list of parts of the target series only. If exogenous series
         is not None, then returns a list of tuples where the first element of the
-        tuple is a target series part, and second is a exogenous series part
+        tuple is a target series part, and second is a exogenous series part, and
+        the target series part has 'forecastHorizon' additional number of elements
+        than the exogenous series part of each tuple
         """
 
         if exogenousSeries is None:
             return Utility.breakSeq(targetSeries, seqLength)
         else:
-            assert (targetSeries.shape[0] == exogenousSeries.shape[0])
+            assert (
+                targetSeries.shape[0] == exogenousSeries.shape[0]
+                and forecastHorizon is not None
+            )
 
-        targetSequences = Utility.breakSeq(targetSeries, seqLength)
-        exoSequences = Utility.breakSeq(exogenousSeries, seqLength)
+        n = targetSeries.shape[0]
+        targetSequences = []
+        exoSequences = []
+        seqStart = 0
 
-        assert (len(targetSeries) == len(exogenousSeries))
+        while seqStart < n:
+            seqEnd = min(seqStart + seqLength + forecastHorizon, n)
+            if seqEnd - forecastHorizon <= seqStart:
+                break
+
+            targetSequences.append(targetSeries[seqStart:seqEnd])
+            exoSequences.append(exogenousSeries[seqStart:seqEnd-forecastHorizon])
+            seqStart = seqEnd
+
+        assert (len(targetSequences) == len(exoSequences))
 
         return list(zip(targetSequences, exoSequences))
 
@@ -105,6 +123,41 @@ class Utility:
         dataTest = data[nTrain + nVal:]
 
         return dataTrain, dataVal, dataTest
+
+    @staticmethod
+    def trainTestSplitSeries(targetSeries, exogenousSeries, train, val=None):
+        """
+        Split the data into training and testing data, or training, testing and validation
+        data. Important - data is not shuffled since it is assumed to be a time series data
+
+        :param targetSeries: Target series, it is a numpy array of shape (n, d1)
+        where n is the number of data points and d1 is the number of dimensions
+        :param exogenousSeries: Exogenous series, it is a numpy array of shape (n, d2) where
+        n is the number of data points and d2 is the number of dimensions. Cannot be None,
+        if you don't have an exogenous series, then please use the trainTestSplit function.
+        :param train: If is is a float between 0 and 1, then it is fraction of training
+        data, If >= 1, then it is the number of training samples
+        :param val: If None, then split is only train and test, If it is a float
+        between 0 and 1, then it is fraction of validation data, If >= 1, then it is
+        the number of validation samples
+        :return: If val is None, then returns (targetTrain, exoTrain), (exoTrain, exoTest),
+        else returns (targetTrain, exoTrain), (targetVal, exoVal), (targetTest, exoTest)
+        where (targetTrain, exoTrain) is the training set, (targetVal, exoVal) is the
+        validation set and (targetTest, exoTest) is the test set
+        """
+
+        if val is None:
+            targetTrain, targetTest = Utility.trainTestSplit(targetSeries, train)
+            exoTrain, exoTest = Utility.trainTestSplit(exogenousSeries, train)
+            return (targetTrain, exoTrain), (targetTest, exoTest)
+
+        targetTrain, targetVal, targetTest = \
+            Utility.trainTestSplit(targetSeries, train, True)
+
+        exoTrain, exoVal, exoTest = \
+            Utility.trainTestSplit(exogenousSeries, train, True)
+
+        return (targetTrain, exoTrain), (targetVal, exoVal), (targetTest, exoTest)
 
     @staticmethod
     def prepareDataPred(targetSeries, exogenousSeries):
