@@ -128,6 +128,8 @@ ts/
 |__ data/
 |    |__ dataset/
 |         |__ AmazonStockPrice
+|         |__ RetailSales
+|         |__ JaipurWeather
 |
 |    |__ generate/
 |         |__ univariate/
@@ -154,6 +156,8 @@ ts/
 |    |__ ConsoleLogger
 |    |__ FileLogger
 |    |__ GlobalLogger
+|
+|__ test/
 |
 |__ utility/
 |    |__ Utility
