@@ -343,8 +343,53 @@ def test_prepareDataPred(targetSeries, exogenousSeries):
         assert np.array_equal(x, X[i])
 
 
-def test_prepareDataTrain():
-    pass
+@pytest.mark.parametrize('targetSeries, exogenousSeries, forecastHorizon', [
+    (np.random.uniform(0, 100, size=(151,)), None, 1),
+    (np.random.uniform(0, 100, size=(110,)), None, 10),
+    (np.random.uniform(0, 100, size=(104, 5)), None, 4),
+    (
+        np.random.uniform(0, 100, size=(112,)),
+        np.random.uniform(0, 100, size=(100, 3)),
+        12
+    ),
+    (
+        np.random.uniform(0, 100, size=(115, 5)),
+        np.random.uniform(0, 100, size=(100, 3)),
+        15
+    ),
+    (
+        np.random.uniform(0, 100, size=(101, 5)),
+        np.random.uniform(0, 100, size=(100, 5)),
+        1
+    ),
+    (
+        np.random.uniform(0, 100, size=(130, 2)),
+        np.random.uniform(0, 100, size=(100, 5)),
+        30
+    )
+])
+def test_prepareDataTrain(targetSeries, exogenousSeries, forecastHorizon):
+    if exogenousSeries is not None:
+        assert targetSeries.shape[0] == exogenousSeries.shape[0] + forecastHorizon
+
+    assert targetSeries.shape[0] > forecastHorizon
+    n = targetSeries.shape[0] - forecastHorizon
+
+    X, Y = Utility.prepareDataTrain(targetSeries, exogenousSeries, forecastHorizon)
+    assert n == X.shape[0] == Y.shape[0]  # Shapes of features and targets must agree
+
+    # The targets must equal to the target series starting at 'forecastHorizon'
+    assert np.array_equal(Y, targetSeries[forecastHorizon:])
+
+    xConstruct = targetSeries[:n]
+    if len(xConstruct.shape) == 1:
+        xConstruct = np.expand_dims(xConstruct, axis=1)
+
+    if exogenousSeries is not None:
+        xConstruct = np.concatenate((xConstruct, exogenousSeries), axis=1)
+
+    # Features must match the concatenation of target series and exo series
+    assert np.array_equal(X, xConstruct)
 
 
 @pytest.mark.parametrize('exogenousSeries, numExoVariables, isValid', [

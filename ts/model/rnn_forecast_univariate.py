@@ -58,7 +58,11 @@ class RnnForecastUnivariate:
         """
         Train the model on the provided data sequences
 
-        :param trainSequences: Sequences of data
+        :param trainSequences: Sequences of data, each seq in this must either
+        be a numpy array of shape (n + forecastHorizon,) or (n + forecastHorizon, d1)
+        or a 2-tuple whose first element is a numpy array of shape
+        (n + forecastHorizon,) or (n + forecastHorizon, d1), and second element is
+        a numpy array of shape (n + forecastHorizon, d2)
         :param numIterations: Number of iterations of training to be performed
         :param optimizer: Optimizer using which to train the parameters of the model
         :param modelSavePath: If not None, then save the model to this path after
