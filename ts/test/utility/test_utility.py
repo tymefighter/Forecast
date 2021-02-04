@@ -95,8 +95,57 @@ def test_breakTrainSeq(
     assert (startIdx + forecastHorizon == n) or (n - startIdx <= forecastHorizon)
 
 
-def test_trainTestSplit():
-    pass
+@pytest.mark.parametrize(
+    'data, train, val', [
+        (np.random.uniform(0, 1000, size=(5000,)), 3500, None),
+        (np.random.uniform(0, 1000, size=(5000, 10)), 4900, None),
+        (np.random.uniform(0, 1000, size=(100, 4)), 1, None),
+        (np.random.uniform(0, 1000, size=(5000, 4)), 0.9, None),
+        (np.random.uniform(0, 1000, size=(2550, 4)), 0.7, None),
+        (np.random.uniform(0, 1000, size=(3000, 4)), 0.1, None),
+
+        (np.random.uniform(0, 1000, size=(5000,)), 3500, 500),
+        (np.random.uniform(0, 1000, size=(5000, 10)), 4900, 95),
+        (np.random.uniform(0, 1000, size=(100, 4)), 1, 1),
+        (np.random.uniform(0, 1000, size=(100, 4)), 1, 0.4),
+        (np.random.uniform(0, 1000, size=(5000, 4)), 0.9, 0.05),
+        (np.random.uniform(0, 1000, size=(2550, 4)), 0.7, 0.1),
+        (np.random.uniform(0, 1000, size=(2550, 4)), 0.7, 0.0),
+    ], ids=[
+        'no_val-0', 'no_val-1', 'no_val-2', 'no_val-3', 'no_val-4', 'no_val-5',
+        'val-0', 'val-1', 'val-2', 'val-3', 'val-4', 'val-5', 'val-6'
+    ])
+def test_trainTestSplit(data, train, val):
+
+    # If validation set is not required
+    if val is None:
+        dataTrain, dataTest = Utility.trainTestSplit(data, train, None)
+
+        # train and test data together should give entire data
+        assert np.array_equal(np.concatenate((dataTrain, dataTest), axis=0), data)
+
+        if train < 1.0:
+            train = round(data.shape[0] * train)
+
+        # Train data must have the required number of elements
+        assert dataTrain.shape[0] == train
+
+        return
+
+    dataTrain, dataVal, dataTest = Utility.trainTestSplit(data, train, val)
+
+    # train, val and test data together should give entire data
+    assert np.array_equal(np.concatenate((dataTrain, dataVal, dataTest), axis=0), data)
+
+    if train < 1.0:
+        train = round(data.shape[0] * train)
+
+    if val < 1.0:
+        val = round(data.shape[0] * val)
+
+    # Train and Val data must have the required number of elements
+    assert dataTrain.shape[0] == train
+    assert dataVal.shape[0] == val
 
 
 def test_trainTestSplitSeries():

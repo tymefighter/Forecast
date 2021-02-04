@@ -87,7 +87,7 @@ class Utility:
         data. Important - data is not shuffled since it is assumed to be a time series data
 
         :param data: The data, it is a numpy array of shape (n, d) where n is the number
-        of data points and d is the number of dimensions
+        of data points and d is the number of dimensions, or it has shape (n,)
         :param train: If is is a float between 0 and 1, then it is fraction of training
         data, If >= 1, then it is the number of training samples
         :param val: If None, then split is only train and test, If it is a float
@@ -132,7 +132,8 @@ class Utility:
         data. Important - data is not shuffled since it is assumed to be a time series data
 
         :param targetSeries: Target series, it is a numpy array of shape (n, d1)
-        where n is the number of data points and d1 is the number of dimensions
+        where n is the number of data points and d1 is the number of dimensions, or a
+        numpy array of dimension (n,)
         :param exogenousSeries: Exogenous series, it is a numpy array of shape (n, d2) where
         n is the number of data points and d2 is the number of dimensions. Cannot be None,
         if you don't have an exogenous series, then please use the trainTestSplit function.
