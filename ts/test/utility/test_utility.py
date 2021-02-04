@@ -50,6 +50,7 @@ def test_breakTrainSeq(
         forecastHorizon
 ):
     n = targetSeries.shape[0]
+
     trainSequences = Utility.breakTrainSeq(
         targetSeries, exogenousSeries, seqLength, forecastHorizon
     )
@@ -68,6 +69,9 @@ def test_breakTrainSeq(
 
     # Forecast horizon cannot be None
     assert forecastHorizon is not None
+
+    # Target and Exogenous series must have same number of elements
+    assert targetSeries.shape[0] == exogenousSeries.shape[0]
 
     # Check if the train sequences are correct
     startIdx = 0
@@ -117,15 +121,15 @@ def test_breakTrainSeq(
     ])
 def test_trainTestSplit(data, train, val):
 
+    if train < 1.0:
+        train = round(data.shape[0] * train)
+
     # If validation set is not required
     if val is None:
         dataTrain, dataTest = Utility.trainTestSplit(data, train, None)
 
         # train and test data together should give entire data
         assert np.array_equal(np.concatenate((dataTrain, dataTest), axis=0), data)
-
-        if train < 1.0:
-            train = round(data.shape[0] * train)
 
         # Train data must have the required number of elements
         assert dataTrain.shape[0] == train
@@ -135,10 +139,9 @@ def test_trainTestSplit(data, train, val):
     dataTrain, dataVal, dataTest = Utility.trainTestSplit(data, train, val)
 
     # train, val and test data together should give entire data
-    assert np.array_equal(np.concatenate((dataTrain, dataVal, dataTest), axis=0), data)
-
-    if train < 1.0:
-        train = round(data.shape[0] * train)
+    assert np.array_equal(
+        np.concatenate((dataTrain, dataVal, dataTest), axis=0), data
+    )
 
     if val < 1.0:
         val = round(data.shape[0] * val)
@@ -148,8 +151,79 @@ def test_trainTestSplit(data, train, val):
     assert dataVal.shape[0] == val
 
 
-def test_trainTestSplitSeries():
-    pass
+@pytest.mark.parametrize('targetSeries, exogenousSeries, train, val', [
+    (
+        np.random.uniform(0, 1000, size=(5000,)),
+        np.random.uniform(0, 1000, size=(5000, 1)),
+        4500, None
+    ),
+    (
+        np.random.uniform(0, 2000, size=(5000, 10)),
+        np.random.uniform(0, 2000, size=(5000, 5)),
+        4999, None
+    ),
+    (
+        np.random.uniform(0, 2000, size=(100, 7)),
+        np.random.uniform(0, 2000, size=(100, 3)),
+        1, 1
+    ),
+    (
+        np.random.uniform(0, 2000, size=(100, 3)),
+        np.random.uniform(0, 2000, size=(100, 7)),
+        98, 1
+    ),
+    (
+        np.random.uniform(0, 2000, size=(1000, 4)),
+        np.random.uniform(0, 2000, size=(1000, 6)),
+        0.7, 0.2
+    ),
+    (
+        np.random.uniform(0, 2000, size=(1000, 5)),
+        np.random.uniform(0, 2000, size=(1000, 5)),
+        0.5, 0.1
+    ),
+])
+def test_trainTestSplitSeries(targetSeries, exogenousSeries, train, val):
+
+    assert targetSeries.shape[0] == exogenousSeries.shape[0]
+    n = targetSeries.shape[0]
+
+    if train < 1.0:
+        train = round(n * train)
+
+    # If validation set is not required
+    if val is None:
+        (targetTrain, exoTrain), (targetTest, exoTest) = \
+            Utility.trainTestSplitSeries(targetSeries, exogenousSeries, train, None)
+
+        # train and test data together should give entire data
+        assert np.array_equal(
+            np.concatenate((targetTrain, targetTest), axis=0), targetSeries
+        )
+        assert np.array_equal(
+            np.concatenate((exoTrain, exoTest), axis=0), exogenousSeries
+        )
+
+        assert targetTrain.shape[0] == exoTrain.shape[0] == train
+
+        return
+
+    if val < 1.0:
+        val = round(n * val)
+
+    (targetTrain, exoTrain), (targetVal, exoVal), (targetTest, exoTest) = \
+        Utility.trainTestSplitSeries(targetSeries, exogenousSeries, train, val)
+
+    # train, val and test data together should give entire data
+    assert np.array_equal(
+        np.concatenate((targetTrain, targetVal, targetTest), axis=0), targetSeries
+    )
+    assert np.array_equal(
+        np.concatenate((exoTrain, exoVal, exoTest), axis=0), exogenousSeries
+    )
+
+    assert targetTrain.shape[0] == exoTrain.shape[0] == train
+    assert targetVal.shape[0] == exoVal.shape[0] == val
 
 
 def test_prepareDataPred():

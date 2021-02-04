@@ -154,10 +154,10 @@ class Utility:
             return (targetTrain, exoTrain), (targetTest, exoTest)
 
         targetTrain, targetVal, targetTest = \
-            Utility.trainTestSplit(targetSeries, train, True)
+            Utility.trainTestSplit(targetSeries, train, val)
 
         exoTrain, exoVal, exoTest = \
-            Utility.trainTestSplit(exogenousSeries, train, True)
+            Utility.trainTestSplit(exogenousSeries, train, val)
 
         return (targetTrain, exoTrain), (targetVal, exoVal), (targetTest, exoTest)
 
