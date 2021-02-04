@@ -50,7 +50,9 @@ class Utility:
         is not None, then returns a list of tuples where the first element of the
         tuple is a target series part, and second is a exogenous series part, and
         the target series part has 'forecastHorizon' additional number of elements
-        than the exogenous series part of each tuple
+        than the exogenous series part of each tuple, i.e. target part has shape
+        (m + forecastHorizon,) or (m + forecastHorizon, d1) and exo part has
+        shape (m, d2)
         """
 
         if exogenousSeries is None:
@@ -79,6 +81,59 @@ class Utility:
         assert (len(targetSequences) == len(exoSequences))
 
         return list(zip(targetSequences, exoSequences))
+
+    @staticmethod
+    def convertToTrainSeq(dataSequences, containsExo, forecastHorizon):
+        """
+        Given multiple raw training sequences of data, which may either
+        be a list of numpy arrays or a list of 2-tuples of numpy arrays
+        (when exo variables are present), we drop all sequences which
+        have less than forecastHorizon + 1 elements. And if exo is
+        present, we remove the last 'forecastHorizon' many elements
+        from each exogenous sequence in the data sequences. This is
+        useful when we are provided with multiple sequences of data
+        for training, and we have to reshape each sequence so that
+        their shapes agree with what the training algorithm requires.
+
+        :param dataSequences: Sequences of raw training data. It is
+        either a list of numpy arrays, where each numpy array is
+        a target part, hence you must set containsExo=False, or it
+        is a list of 2-tuples, both elements of each tuple contain
+        numpy arrays, first element being a target part, and second
+        element being a exogenous part.
+        :param containsExo: If True, then dataSequences is said to
+        containing both target and exogenous parts in each sequence
+        :param forecastHorizon: The forecast horizon
+        :return: training sequences. When data sequences do not
+        contain exogenous parts, then this is a list of numpy
+        arrays from dataSequences, but with all those numpy arrays
+        removed which had length <= forecastHorizon. When data
+        sequences contain exogenous parts, then this is a list of
+        2-tuples, where both elements of these tuples are numpy arrays,
+        the first element is the target part, the second is the exogenous
+        part, these are taken from dataSequences but with all those tuples
+        removed for which length of seq is <= forecastHorizon, and
+        the exogenous part's last forecastHorizon elements are removed
+        """
+
+        if not containsExo:
+            return list(filter(
+                lambda seq: seq.shape[0] > forecastHorizon,
+                dataSequences
+            ))
+
+        trainSequences = []
+        for targetSeries, exogenousSeries in dataSequences:
+            assert targetSeries.shape[0] == exogenousSeries.shape[0]
+
+            n = targetSeries.shape[0]
+            if n <= forecastHorizon:
+                continue
+
+            exogenousSeries = exogenousSeries[:n - forecastHorizon]
+            trainSequences.append((targetSeries, exogenousSeries))
+
+        return trainSequences
 
     @staticmethod
     def trainTestSplit(data, train, val=None):

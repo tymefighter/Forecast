@@ -101,6 +101,71 @@ def test_breakTrainSeq(
     assert (startIdx + forecastHorizon == n) or (n - startIdx <= forecastHorizon)
 
 
+@pytest.mark.parametrize('dataSequences, containsExo, forecastHorizon', [
+    (
+        [np.random.uniform(0, 100, size=(100,)) for i in range(50)],
+        False, 10
+    ),
+    (
+        [np.random.uniform(0, 100, size=(n,))
+            for n in list(np.random.randint(0, 100, size=50))],
+        False, 50
+    ),
+    (
+        [np.random.uniform(0, 100, size=(n, 20))
+            for n in list(np.random.randint(0, 100, size=50))],
+        False, 50
+    ),
+    (
+        [
+            (np.random.uniform(0, 100, size=(n,)),
+             np.random.uniform(0, 100, size=(n, 5)))
+            for n in list(np.random.randint(0, 100, size=50))
+        ],
+        True, 50
+    ),
+    (
+        [
+            (np.random.uniform(0, 100, size=(n, 4)),
+             np.random.uniform(0, 100, size=(n, 5)))
+            for n in list(np.random.randint(0, 100, size=50))
+        ],
+        True, 50
+    )
+], ids=['nonexo-0', 'nonexo-1', 'nonexo-2', 'exo-0', 'exo-1'])
+def test_convertToTrainSeq(dataSequences, containsExo, forecastHorizon):
+    trainSequences = \
+        Utility.convertToTrainSeq(dataSequences, containsExo, forecastHorizon)
+
+    dataSeqIdx = 0
+    trainSeqIdx = 0
+    while dataSeqIdx < len(dataSequences):
+        if containsExo:
+
+            (dataTarget, dataExo) = dataSequences[dataSeqIdx]
+            dataLen = dataTarget.shape[0]
+            if dataLen > forecastHorizon:
+                (trainTarget, trainExo) = trainSequences[trainSeqIdx]
+
+                assert np.array_equal(trainTarget, dataTarget)
+                assert np.array_equal(trainExo, dataExo[:dataLen - forecastHorizon])
+                trainSeqIdx += 1
+
+        else:
+
+            dataTarget = dataSequences[dataSeqIdx]
+            dataLen = dataTarget.shape[0]
+            if dataLen > forecastHorizon:
+                trainTarget = trainSequences[trainSeqIdx]
+
+                assert np.array_equal(trainTarget, dataTarget)
+                trainSeqIdx += 1
+
+        dataSeqIdx += 1
+
+    assert trainSeqIdx == len(trainSequences)
+
+
 @pytest.mark.parametrize(
     'data, train, val', [
         (np.random.uniform(0, 1000, size=(5000,)), 3500, None),
