@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 from ts.utility import Utility
+from ts.data.generate.univariate.nonexo \
+    import StandardGenerator, PolynomialGenerator, DifficultGenerator
 
 
 @pytest.mark.parametrize('data, seqLength', [
@@ -182,7 +184,7 @@ def test_trainTestSplit(data, train, val):
         np.random.uniform(0, 2000, size=(1000, 5)),
         0.5, 0.1
     ),
-])
+], ids=['no_val-0', 'no_val-1', 'val-0', 'val-1', 'val-2', 'val-3'])
 def test_trainTestSplitSeries(targetSeries, exogenousSeries, train, val):
 
     assert targetSeries.shape[0] == exogenousSeries.shape[0]
@@ -234,9 +236,49 @@ def test_prepareDataTrain():
     pass
 
 
-def test_isExoShapeValid():
-    pass
+@pytest.mark.parametrize('exogenousSeries, numExoVariables, isValid', [
+    (None, 0, True),
+    (np.random.uniform(0, 10, size=(10, 1)), 1, True),
+    (np.random.uniform(0, 10, size=(20, 4)), 4, True),
+    (np.random.uniform(0, 10, size=(15, 15)), 15, True),
+
+    (None, 1, False),
+    (None, 5, False),
+    (np.random.uniform(0, 10, size=(20,)), 1, False),
+    (np.random.uniform(0, 10, size=(20, 4)), 3, False),
+    (np.random.uniform(0, 10, size=(20, 4, 2)), 4, False)
+], ids=[
+    'valid-0', 'valid-1', 'valid-2', 'valid-3',
+    'invalid-0', 'invalid-1', 'invalid-2', 'invalid-3', 'invalid-4'
+])
+def test_isExoShapeValid(exogenousSeries, numExoVariables, isValid):
+
+    assert Utility.isExoShapeValid(exogenousSeries, numExoVariables) == isValid
 
 
-def test_generateMultipleSequence():
-    pass
+@pytest.mark.parametrize(
+    'dataGenerator, numSequences, minSequenceLength, maxSequenceLength', [
+        (StandardGenerator(), 100, 20, 20),
+        (StandardGenerator(), 200, 1, 200),
+        (PolynomialGenerator(), 30, 40, 42),
+        (PolynomialGenerator(), 20, 20, 20),
+        (DifficultGenerator(), 1, 1, 1),
+        (DifficultGenerator(), 2, 1, 2)
+    ], ids=['gen-0', 'gen-1', 'gen-2', 'gen-3', 'gen-4', 'gen-5'])
+def test_generateMultipleSequence(
+    dataGenerator,
+    numSequences,
+    minSequenceLength,
+    maxSequenceLength
+):
+    dataSeq = Utility.generateMultipleSequence(
+        dataGenerator,
+        numSequences,
+        minSequenceLength,
+        maxSequenceLength
+    )
+
+    assert len(dataSeq) == numSequences
+
+    for seq in dataSeq:
+        assert minSequenceLength <= seq.shape[0] <= maxSequenceLength

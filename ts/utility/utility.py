@@ -240,6 +240,8 @@ class Utility:
             return \
                 exogenousSeries is not None \
                 and \
+                len(exogenousSeries.shape) == 2 \
+                and \
                 exogenousSeries.shape[1] == numExoVariables
 
     @staticmethod
