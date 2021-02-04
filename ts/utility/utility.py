@@ -50,7 +50,9 @@ class Utility:
         is not None, then returns a list of tuples where the first element of the
         tuple is a target series part, and second is a exogenous series part, and
         the target series part has 'forecastHorizon' additional number of elements
-        than the exogenous series part of each tuple
+        than the exogenous series part of each tuple, i.e. target part has shape
+        (m + forecastHorizon,) or (m + forecastHorizon, d1) and exo part has
+        shape (m, d2)
         """
 
         if exogenousSeries is None:
@@ -67,17 +69,71 @@ class Utility:
         seqStart = 0
 
         while seqStart < n:
-            seqEnd = min(seqStart + seqLength + forecastHorizon, n)
-            if seqEnd - forecastHorizon <= seqStart:
+            targetSeqEnd = min(seqStart + seqLength + forecastHorizon, n)
+            exoSeqEnd = targetSeqEnd - forecastHorizon
+            if exoSeqEnd <= seqStart:
                 break
 
-            targetSequences.append(targetSeries[seqStart:seqEnd])
-            exoSequences.append(exogenousSeries[seqStart:seqEnd-forecastHorizon])
-            seqStart = seqEnd
+            targetSequences.append(targetSeries[seqStart:targetSeqEnd])
+            exoSequences.append(exogenousSeries[seqStart:exoSeqEnd])
+            seqStart = exoSeqEnd
 
         assert (len(targetSequences) == len(exoSequences))
 
         return list(zip(targetSequences, exoSequences))
+
+    @staticmethod
+    def convertToTrainSeq(dataSequences, containsExo, forecastHorizon):
+        """
+        Given multiple raw training sequences of data, which may either
+        be a list of numpy arrays or a list of 2-tuples of numpy arrays
+        (when exo variables are present), we drop all sequences which
+        have less than forecastHorizon + 1 elements. And if exo is
+        present, we remove the last 'forecastHorizon' many elements
+        from each exogenous sequence in the data sequences. This is
+        useful when we are provided with multiple sequences of data
+        for training, and we have to reshape each sequence so that
+        their shapes agree with what the training algorithm requires.
+
+        :param dataSequences: Sequences of raw training data. It is
+        either a list of numpy arrays, where each numpy array is
+        a target part, hence you must set containsExo=False, or it
+        is a list of 2-tuples, both elements of each tuple contain
+        numpy arrays, first element being a target part, and second
+        element being a exogenous part.
+        :param containsExo: If True, then dataSequences is said to
+        containing both target and exogenous parts in each sequence
+        :param forecastHorizon: The forecast horizon
+        :return: training sequences. When data sequences do not
+        contain exogenous parts, then this is a list of numpy
+        arrays from dataSequences, but with all those numpy arrays
+        removed which had length <= forecastHorizon. When data
+        sequences contain exogenous parts, then this is a list of
+        2-tuples, where both elements of these tuples are numpy arrays,
+        the first element is the target part, the second is the exogenous
+        part, these are taken from dataSequences but with all those tuples
+        removed for which length of seq is <= forecastHorizon, and
+        the exogenous part's last forecastHorizon elements are removed
+        """
+
+        if not containsExo:
+            return list(filter(
+                lambda seq: seq.shape[0] > forecastHorizon,
+                dataSequences
+            ))
+
+        trainSequences = []
+        for targetSeries, exogenousSeries in dataSequences:
+            assert targetSeries.shape[0] == exogenousSeries.shape[0]
+
+            n = targetSeries.shape[0]
+            if n <= forecastHorizon:
+                continue
+
+            exogenousSeries = exogenousSeries[:n - forecastHorizon]
+            trainSequences.append((targetSeries, exogenousSeries))
+
+        return trainSequences
 
     @staticmethod
     def trainTestSplit(data, train, val=None):
@@ -86,7 +142,7 @@ class Utility:
         data. Important - data is not shuffled since it is assumed to be a time series data
 
         :param data: The data, it is a numpy array of shape (n, d) where n is the number
-        of data points and d is the number of dimensions
+        of data points and d is the number of dimensions, or it has shape (n,)
         :param train: If is is a float between 0 and 1, then it is fraction of training
         data, If >= 1, then it is the number of training samples
         :param val: If None, then split is only train and test, If it is a float
@@ -131,7 +187,8 @@ class Utility:
         data. Important - data is not shuffled since it is assumed to be a time series data
 
         :param targetSeries: Target series, it is a numpy array of shape (n, d1)
-        where n is the number of data points and d1 is the number of dimensions
+        where n is the number of data points and d1 is the number of dimensions, or a
+        numpy array of dimension (n,)
         :param exogenousSeries: Exogenous series, it is a numpy array of shape (n, d2) where
         n is the number of data points and d2 is the number of dimensions. Cannot be None,
         if you don't have an exogenous series, then please use the trainTestSplit function.
@@ -152,10 +209,10 @@ class Utility:
             return (targetTrain, exoTrain), (targetTest, exoTest)
 
         targetTrain, targetVal, targetTest = \
-            Utility.trainTestSplit(targetSeries, train, True)
+            Utility.trainTestSplit(targetSeries, train, val)
 
         exoTrain, exoVal, exoTest = \
-            Utility.trainTestSplit(exogenousSeries, train, True)
+            Utility.trainTestSplit(exogenousSeries, train, val)
 
         return (targetTrain, exoTrain), (targetVal, exoVal), (targetTest, exoTest)
 
@@ -237,6 +294,8 @@ class Utility:
         else:
             return \
                 exogenousSeries is not None \
+                and \
+                len(exogenousSeries.shape) == 2 \
                 and \
                 exogenousSeries.shape[1] == numExoVariables
 

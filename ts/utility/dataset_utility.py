@@ -15,6 +15,8 @@ class DatasetUtility:
         :return:
         """
 
+        df = df.copy()
+
         dateColumnName = next(filter(
             lambda columnName: columnName.lower() == 'date',
             list(df.columns)
