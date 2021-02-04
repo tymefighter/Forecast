@@ -293,8 +293,54 @@ def test_trainTestSplitSeries(targetSeries, exogenousSeries, train, val):
     assert targetVal.shape[0] == exoVal.shape[0] == val
 
 
-def test_prepareDataPred():
-    pass
+@pytest.mark.parametrize('targetSeries, exogenousSeries', [
+    (np.random.uniform(0, 100, size=(100,)), None),
+    (np.random.uniform(0, 100, size=(100, 4)), None),
+    (
+        np.random.uniform(0, 100, size=(50,)),
+        np.random.uniform(0, 100, size=(50, 4))
+    ),
+    (
+        np.random.uniform(0, 100, size=(50, 1)),
+        np.random.uniform(0, 100, size=(50, 1))
+    ),
+    (
+        np.random.uniform(0, 100, size=(50, 3)),
+        np.random.uniform(0, 100, size=(50, 4))
+    )
+], ids=['nonexo-0', 'nonexo-1', 'exo-0', 'exo-1', 'exo-2'])
+def test_prepareDataPred(targetSeries, exogenousSeries):
+
+    if exogenousSeries is not None:
+        assert targetSeries.shape[0] == exogenousSeries.shape[0]
+
+    n = targetSeries.shape[0]
+    X = Utility.prepareDataPred(targetSeries, exogenousSeries)
+
+    if len(targetSeries.shape) == 1:
+        d1 = 1
+    else:
+        d1 = targetSeries.shape[1]
+
+    if exogenousSeries is None:
+        d2 = 0
+    else:
+        d2 = exogenousSeries.shape[1]
+
+    # Shape of features must equal to (n, d1 + d2)
+    assert X.shape == (n, d1 + d2)
+
+    for i in range(n):
+        x = targetSeries[i]
+        if not isinstance(x, np.ndarray):
+            x = np.array([x])
+
+        if exogenousSeries is not None:
+            x = np.concatenate((x, exogenousSeries[i]), axis=0)
+
+        # Concatenation of ith target and exo elements must be
+        # the ith element of features X
+        assert np.array_equal(x, X[i])
 
 
 def test_prepareDataTrain():
