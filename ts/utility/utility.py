@@ -67,13 +67,14 @@ class Utility:
         seqStart = 0
 
         while seqStart < n:
-            seqEnd = min(seqStart + seqLength + forecastHorizon, n)
-            if seqEnd - forecastHorizon <= seqStart:
+            targetSeqEnd = min(seqStart + seqLength + forecastHorizon, n)
+            exoSeqEnd = targetSeqEnd - forecastHorizon
+            if exoSeqEnd <= seqStart:
                 break
 
-            targetSequences.append(targetSeries[seqStart:seqEnd])
-            exoSequences.append(exogenousSeries[seqStart:seqEnd-forecastHorizon])
-            seqStart = seqEnd
+            targetSequences.append(targetSeries[seqStart:targetSeqEnd])
+            exoSequences.append(exogenousSeries[seqStart:exoSeqEnd])
+            seqStart = exoSeqEnd
 
         assert (len(targetSequences) == len(exoSequences))
 
