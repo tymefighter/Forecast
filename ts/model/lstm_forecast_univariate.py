@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from ts.model.rnn_forecast_univariate import RnnForecastUnivariate
+from ts.model.rnn_forecast_univariate import RnnForecast
 
 
-class LstmForecastUnivariate(RnnForecastUnivariate):
+class LstmForecast(RnnForecast):
     """ LSTM univariate forecasting model """
 
     def __init__(
@@ -12,6 +12,7 @@ class LstmForecastUnivariate(RnnForecastUnivariate):
             stateSize=10,
             activation='tanh',
             numRnnLayers=1,
+            numTargetVariables=1,
             numExoVariables=0,
             modelLoadPath=None
     ):
@@ -23,6 +24,7 @@ class LstmForecastUnivariate(RnnForecastUnivariate):
         :param stateSize: Size of the state of each LSTM layer
         :param activation: Activation function to use
         :param numRnnLayers: Number of LSTM layers of the model
+        :param numTargetVariables: Number of target variables the model takes as input
         :param numExoVariables: Number of exogenous variables the model takes as input
         :param modelLoadPath: If specified, then all provided parameters are ignored,
         and the model is loaded from the path
@@ -39,6 +41,7 @@ class LstmForecastUnivariate(RnnForecastUnivariate):
             tf.keras.layers.LSTM,
             lstmParam,
             numRnnLayers,
+            numTargetVariables,
             numExoVariables,
             modelLoadPath
         )
