@@ -1,10 +1,10 @@
 import tensorflow as tf
 
-from ts.model.rnn_forecast_univariate import RnnForecast
+from ts.model.rnn_forecast import RnnForecast
 
 
-class LstmForecast(RnnForecast):
-    """ LSTM univariate forecasting model """
+class SimpleRnnForecast(RnnForecast):
+    """ Simple RNN univariate forecasting model """
 
     def __init__(
             self,
@@ -17,20 +17,20 @@ class LstmForecast(RnnForecast):
             modelLoadPath=None
     ):
         """
-        Initialize LSTM Forecasting model using the given parameters
+        Initialize Simple RNN Forecasting model using the given parameters
 
         :param forecastHorizon: How much further in the future the model has to
         predict the target series variable
-        :param stateSize: Size of the state of each LSTM layer
+        :param stateSize: Size of the state of each Simple RNN layer
         :param activation: Activation function to use
-        :param numRnnLayers: Number of LSTM layers of the model
+        :param numRnnLayers: Number of GRU layers of the model
         :param numTargetVariables: Number of target variables the model takes as input
         :param numExoVariables: Number of exogenous variables the model takes as input
         :param modelLoadPath: If specified, then all provided parameters are ignored,
         and the model is loaded from the path
         """
 
-        lstmParam = {
+        simpleRnnParam = {
             'units': stateSize,
             'activation': activation,
             'return_sequences': True
@@ -38,8 +38,8 @@ class LstmForecast(RnnForecast):
 
         super().__init__(
             forecastHorizon,
-            tf.keras.layers.LSTM,
-            lstmParam,
+            tf.keras.layers.SimpleRNN,
+            simpleRnnParam,
             numRnnLayers,
             numTargetVariables,
             numExoVariables,
