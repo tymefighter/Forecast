@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from ts.model.rnn_forecast_univariate import RnnForecast
+from ts.model.rnn_forecast import RnnForecast
 
 
 class GruForecast(RnnForecast):
