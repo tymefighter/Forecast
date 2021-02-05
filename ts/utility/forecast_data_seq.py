@@ -5,9 +5,16 @@ from ts.utility.utility import Utility
 
 class ForecastDataSequence(tf.keras.utils.Sequence):
 
-    def __init__(self, trainSequences, forecastHorizon, numExoVariables):
+    def __init__(
+            self,
+            trainSequences,
+            forecastHorizon,
+            numTargetVariables,
+            numExoVariables
+    ):
         self.trainSequences = trainSequences
         self.forecastHorizon = forecastHorizon
+        self.numTargetVariables = numTargetVariables
         self.numExoVariables = numExoVariables
 
     def __len__(self):
@@ -22,7 +29,8 @@ class ForecastDataSequence(tf.keras.utils.Sequence):
             targetSeries = self.trainSequences[idx]
             exogenousSeries = None
 
-        assert (Utility.isExoShapeValid(exogenousSeries, self.numExoVariables))
+        assert targetSeries.shape[1] == self.numTargetVariables
+        assert Utility.isExoShapeValid(exogenousSeries, self.numExoVariables)
 
         X, Y = Utility.prepareDataTrain(
             targetSeries,
@@ -30,4 +38,4 @@ class ForecastDataSequence(tf.keras.utils.Sequence):
             self.forecastHorizon
         )
 
-        return X[np.newaxis, :, :], Y[np.newaxis, :]
+        return X[np.newaxis, :, :], Y[np.newaxis, :, :]

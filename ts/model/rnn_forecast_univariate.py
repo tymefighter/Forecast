@@ -6,7 +6,7 @@ from ts.utility import Utility, ForecastDataSequence, SaveCallback
 from ts.log import GlobalLogger
 
 
-class RnnForecastUnivariate:
+class RnnForecast:
     """
     RNN based univariate forecasting model which allows for any layer to
     be provided as input
@@ -18,6 +18,7 @@ class RnnForecastUnivariate:
             layerClass,
             layerParameters,
             numRnnLayers=1,
+            numTargetVariables=1,
             numExoVariables=0,
             modelLoadPath=None
     ):
@@ -29,6 +30,7 @@ class RnnForecastUnivariate:
         :param layerClass: Class of the layers of the model
         :param layerParameters: Parameters of the layer passed as a dictionary
         :param numRnnLayers: Number of RNN based layers of the model
+        :param numTargetVariables: Number of target variables the model takes as input
         :param numExoVariables: Number of exogenous variables the model takes as input
         :param modelLoadPath: If specified, then all provided parameters are ignored,
         and the model is loaded from the path
@@ -41,7 +43,8 @@ class RnnForecastUnivariate:
             self.layerClass = layerClass
             self.layerParameters = layerParameters
             self.numRnnLayers = numRnnLayers
-            self.inputDimension = numExoVariables + 1
+            self.numTargetVariables = numTargetVariables
+            self.numExoVariables = numExoVariables
             self.model = None
 
             self.buildModel()
@@ -59,10 +62,9 @@ class RnnForecastUnivariate:
         Train the model on the provided data sequences
 
         :param trainSequences: Sequences of data, each seq in this must either
-        be a numpy array of shape (n + forecastHorizon,) or (n + forecastHorizon, d1)
-        or a 2-tuple whose first element is a numpy array of shape
-        (n + forecastHorizon,) or (n + forecastHorizon, d1), and second element is
-        a numpy array of shape (n + forecastHorizon, d2)
+        be a numpy array of shape (n + forecastHorizon, d1) or a 2-tuple whose
+        first element is a numpy array of shape (n + forecastHorizon, d1),
+        and second element is a numpy array of shape (n + forecastHorizon, d2)
         :param numIterations: Number of iterations of training to be performed
         :param optimizer: Optimizer using which to train the parameters of the model
         :param modelSavePath: If not None, then save the model to this path after
@@ -93,7 +95,8 @@ class RnnForecastUnivariate:
             ForecastDataSequence(
                 trainSequences,
                 self.forecastHorizon,
-                self.inputDimension - 1
+                self.numTargetVariables,
+                self.numExoVariables
             ),
             epochs=numIterations,
             verbose=verboseLevel,
@@ -111,8 +114,8 @@ class RnnForecastUnivariate:
         """
         Forecast using the model parameters on the provided input data
 
-        :param targetSeries: Univariate Series of the Target Variable, it
-        should be a numpy array of shape (n,)
+        :param targetSeries: Series of the Target Variable, it
+        should be a numpy array of shape (n, numTargetVariables)
         :param exogenousSeries: Series of exogenous Variables, it should be a
         numpy array of shape (n, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not
@@ -130,11 +133,14 @@ class RnnForecastUnivariate:
             )
 
         logger.log('Prepare Data', 1, self.predict.__name__)
-        assert (Utility.isExoShapeValid(exogenousSeries, self.inputDimension - 1))
+
+        assert targetSeries.shape[1] == self.numTargetVariables
+        assert (Utility.isExoShapeValid(exogenousSeries, self.numExoVariables))
+
         X = Utility.prepareDataPred(targetSeries, exogenousSeries)
 
         logger.log('Begin Prediction', 1, self.predict.__name__)
-        return tf.squeeze(self.model.predict(np.expand_dims(X, axis=0), verbose=0))
+        return tf.squeeze(self.model.predict(np.expand_dims(X, axis=0), verbose=0), axis=0)
 
     def evaluate(
             self,
@@ -146,8 +152,9 @@ class RnnForecastUnivariate:
         Forecast using the model parameters on the provided data, evaluates
         the forecast result using the loss and returns it
 
-        :param targetSeries: Univariate Series of the Target Variable, it
-        should be a numpy array of shape (numTimesteps + self.forecastHorizon,).
+        :param targetSeries: Series of the Target Variable, it
+        should be a numpy array of shape
+        (numTimesteps + self.forecastHorizon, numTargetVariables).
         numTimesteps is the number of timesteps on which our model must predict,
         the values ahead are for evaluating the predicted results with respect
         to them (i.e. they are true targets for our prediction)
@@ -170,12 +177,15 @@ class RnnForecastUnivariate:
             )
 
         logger.log('Prepare Data', 1, self.evaluate.__name__)
-        assert (Utility.isExoShapeValid(exogenousSeries, self.inputDimension - 1))
+
+        assert targetSeries.shape[1] == self.numTargetVariables
+        assert Utility.isExoShapeValid(exogenousSeries, self.numExoVariables)
+
         X, Ytrue = Utility.prepareDataTrain(targetSeries, exogenousSeries, self.forecastHorizon)
 
         logger.log('Begin Evaluation', 1, self.predict.__name__)
-        Ypred = tf.squeeze(self.model.predict(np.expand_dims(X, axis=0), verbose=0))
-        loss = tf.keras.losses.MSE(
+        Ypred = tf.squeeze(self.model.predict(np.expand_dims(X, axis=0), verbose=0), axis=0)
+        loss = tf.keras.losses.MeanSquaredError()(
             Ytrue,
             Ypred
         )
@@ -203,7 +213,8 @@ class RnnForecastUnivariate:
             'layerClass': self.layerClass,
             'layerParameters': self.layerParameters,
             'numRnnLayers': self.numRnnLayers,
-            'inputDimension': self.inputDimension,
+            'numTargetVariables': self.numTargetVariables,
+            'numExoVariables': self.numExoVariables,
             'weights': self.model.get_weights()
         }
 
@@ -234,7 +245,8 @@ class RnnForecastUnivariate:
         self.layerClass = loadDict['layerClass']
         self.layerParameters = loadDict['layerParameters']
         self.numRnnLayers = loadDict['numRnnLayers']
-        self.inputDimension = loadDict['inputDimension']
+        self.numTargetVariables = loadDict['numTargetVariables']
+        self.numExoVariables = loadDict['numExoVariables']
 
         self.buildModel()
         self.model.set_weights(loadDict['weights'])
@@ -255,7 +267,9 @@ class RnnForecastUnivariate:
         for i in range(self.numRnnLayers):
             self.model.add(self.layerClass(**self.layerParameters))
 
-        self.model.add(
-            tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1, activation=None))
-        )
-        self.model.build(input_shape=(None, None, self.inputDimension))
+        self.model.add(tf.keras.layers.TimeDistributed(
+            tf.keras.layers.Dense(self.numTargetVariables, activation=None)
+        ))
+
+        inputDimension = self.numTargetVariables + self.numExoVariables
+        self.model.build(input_shape=(None, None, inputDimension))
