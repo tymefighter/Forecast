@@ -7,8 +7,8 @@ from ts.log import GlobalLogger
 
 class RecurrentForecast:
     """
-    RNN based univariate forecasting model which allows for any layer to
-    be provided as input
+    RNN based univariate forecasting model which allows for a list
+    of layers to be provided
     """
 
     def __init__(
@@ -16,8 +16,7 @@ class RecurrentForecast:
             forecastHorizon,
             layerList,
             numTargetVariables=1,
-            numExoVariables=0,
-            modelLoadPath=None
+            numExoVariables=0
     ):
         """
         Initialize RNN-based Forecasting model using the given parameters
@@ -27,19 +26,14 @@ class RecurrentForecast:
         :param layerList: list of layers of the recurrent model
         :param numTargetVariables: Number of target variables the model takes as input
         :param numExoVariables: Number of exogenous variables the model takes as input
-        :param modelLoadPath: If specified, then all provided parameters are ignored,
-        and the model is loaded from the path
         """
 
-        if modelLoadPath is not None:
-            self.load(modelLoadPath)
-        else:
-            self.forecastHorizon = forecastHorizon
-            self.numTargetVariables = numTargetVariables
-            self.numExoVariables = numExoVariables
-            self.model = None
+        self.forecastHorizon = forecastHorizon
+        self.numTargetVariables = numTargetVariables
+        self.numExoVariables = numExoVariables
+        self.model = None
 
-            self.buildModel(layerList)
+        self.buildModel(layerList)
 
     def train(
             self,
