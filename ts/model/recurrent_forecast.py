@@ -1,3 +1,5 @@
+import pickle
+import os
 import tensorflow as tf
 import numpy as np
 
@@ -16,7 +18,8 @@ class RecurrentForecast:
             forecastHorizon,
             layerList,
             numTargetVariables=1,
-            numExoVariables=0
+            numExoVariables=0,
+            modelLoadDir=None
     ):
         """
         Initialize RNN-based Forecasting model using the given parameters
@@ -26,14 +29,18 @@ class RecurrentForecast:
         :param layerList: list of layers of the recurrent model
         :param numTargetVariables: Number of target variables the model takes as input
         :param numExoVariables: Number of exogenous variables the model takes as input
+        :param modelLoadDir: If not None, then model is loaded from this directory
         """
 
-        self.forecastHorizon = forecastHorizon
-        self.numTargetVariables = numTargetVariables
-        self.numExoVariables = numExoVariables
-        self.model = None
+        if modelLoadDir is not None:
+            self.load(modelLoadDir)
+        else:
+            self.forecastHorizon = forecastHorizon
+            self.numTargetVariables = numTargetVariables
+            self.numExoVariables = numExoVariables
 
-        self.buildModel(layerList)
+            self.model = None
+            self.buildModel(layerList)
 
     def train(
             self,
@@ -194,3 +201,39 @@ class RecurrentForecast:
 
         inputDimension = self.numTargetVariables + self.numExoVariables
         self.model.build(input_shape=(None, None, inputDimension))
+
+    def save(self, modelSaveDir):
+        """
+        Saves the model at the provided directory path
+
+        :param modelSaveDir: Directory where the model should be saved
+        """
+
+        self.model.save(modelSaveDir)
+
+        saveDict = {
+            'forecastHorizon': self.forecastHorizon,
+            'numTargetVariables': self.numTargetVariables,
+            'numExoVariables': self.numExoVariables
+        }
+
+        saveFile = open(os.path.join(modelSaveDir, 'hyperparam'), 'wb')
+        pickle.dump(saveDict, saveFile)
+        saveFile.close()
+
+    def load(self, modelLoadDir):
+        """
+        Loads the model from the provided directory path
+
+        :param modelLoadDir: Directory from where the model should be loaded
+        """
+
+        self.model = tf.keras.models.load_model(modelLoadDir)
+
+        loadFile = open(os.path.join(modelLoadDir, 'hyperparam'), 'rb')
+        loadDict = pickle.load(loadFile)
+        loadFile.close()
+
+        self.forecastHorizon = loadDict['forecastHorizon']
+        self.numTargetVariables = loadDict['numTargetVariables']
+        self.numExoVariables = loadDict['numExoVariables']
