@@ -31,27 +31,3 @@ class AmazonStockPrice:
             )
 
         return DatasetUtility.sortByDate(pd.read_csv(filePath, header='infer'))
-
-    @staticmethod
-    def loadForecastData(dataPath, targetVariable):
-        """
-        Loads the Amazon Stock Price Dataset as a univariate time
-        series along with a multivariate exogenous series.
-
-        :param dataPath: filepath of where to download the dataset (or where
-        the dataset is located if the dataset is already downloaded)
-        :param targetVariable: name of the target variable as a string
-        :return: a tuple (targetSeries, exogenousSeries) consisting of the
-        target series and exogenous series respectively
-        """
-
-        dataFrame = AmazonStockPrice \
-            .loadData(dataPath) \
-            .drop(columns='Date')
-
-        assert (targetVariable in dataFrame.columns)
-
-        exogenousSeries = dataFrame.iloc[:, dataFrame.columns != targetVariable].to_numpy()
-        targetSeries = dataFrame[targetVariable].to_numpy()
-
-        return targetSeries, exogenousSeries
