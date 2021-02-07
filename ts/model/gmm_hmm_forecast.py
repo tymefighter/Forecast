@@ -4,6 +4,15 @@ from hmmlearn import hmm
 
 
 class GmmHmmForecast:
+    """
+    GMM-HMM forecasting model based on the paper:
+    "Stock Market Prediction Using Hidden Markov Model
+    Aditya Gupta, Non-Student Member, IEEE and Bhuwan Dhingra,
+    Non-Student member, IEEE"
+    links:
+    - https://ieeexplore.ieee.org/document/6199099
+    - http://www.cs.cmu.edu/~bdhingra/papers/stock_hmm.pdf
+    """
 
     @staticmethod
     def load(modelLoadPath):
