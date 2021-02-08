@@ -59,7 +59,7 @@ class GmmHmmForecast:
         each of the emission probabilities
         :param dimension: dimension of the observations
         :param d: number of timesteps to use for forecasting the next
-        observation at the next timestep
+        observation at the next timestep. This is called 'latency'
         :param numIterations: number of iterations of training to be
         performed
         :param threshold: value such that the training procedure
@@ -139,6 +139,8 @@ class GmmHmmForecast:
         maxLikelihoodValues = [] if returnMaxLikelihood else None
 
         for t in range(self.d, X.shape[0]):
+            # Construct observations using [t-d..t] i.e. current timestep is
+            # excluded, since we would be predicting the current timestep
             x = np.concatenate(
                 (X[t - self.d: t], np.zeros((1, self.dimension))),
                 axis=0
