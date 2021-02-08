@@ -66,6 +66,22 @@ from ts.model import ExtremeTime
 from ts.model import ExtremeTime2
 ```
 
+-   A GMM-HMM based forecasting model which predicts by finding maximum
+    posterior probability over a discrete set of observation values (since
+    maximum over the contiuous observation space seems infeasible)
+
+```
+from ts.model import GmmHmmForecast
+```
+
+-   A GMM-HMM based forecasting model which predicts by finding the
+    observation in the training set which is has closest log likelihood
+    value to the current observation's log likelihood value
+
+```
+from ts.model import GmmHmmLikelihoodSimilarity
+```
+
 ## Forecasting Data
 
 This package provides Data Generators as well as Datasets. The `data`
@@ -148,6 +164,8 @@ ts/
 |    |__ DeepNN
 |    |__ ExtremeTime
 |    |__ ExtremeTime2
+|    |__ GmmHmmForecast
+|    |__ GmmHmmLikelihoodSimilarity
 |
 |__ plot/
 |    |__ Plot
