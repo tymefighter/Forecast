@@ -9,6 +9,37 @@ from ts.log import GlobalLogger
 class DeepNN:
     """ Deep Neural Network based forecasting model """
 
+    @staticmethod
+    def load(modelLoadPath):
+        """
+        Loads the model from the provided filepath
+
+        :param modelLoadPath: path from where to load the model
+        :return: model which is loaded from the given path
+        """
+
+        model = DeepNN(loadModel=True)
+
+        with open(modelLoadPath, 'rb') as fl:
+            loadDict = pickle.load(fl)
+
+        GlobalLogger.getLogger().log('Loading Model', 1, DeepNN.load.__name__)
+
+        model.forecastHorizon = loadDict['forecastHorizon']
+        model.lag = loadDict['lag']
+        model.activation = loadDict['activation']
+        model.numUnitsPerLayer = loadDict['numUnitsPerLayer']
+        model.numLayers = loadDict['numLayers']
+        model.numTargetVariables = loadDict['numTargetVariables']
+        model.numExoVariables = loadDict['numExoVariables']
+
+        model.buildModel()
+        model.model.set_weights(loadDict['weights'])
+
+        GlobalLogger.getLogger().log('Loading Complete', 1, DeepNN.load.__name__)
+
+        return model
+
     def __init__(
             self,
             forecastHorizon=1,
@@ -18,7 +49,7 @@ class DeepNN:
             numLayers=1,
             numTargetVariables=1,
             numExoVariables=0,
-            modelLoadPath=None
+            loadModel=False
     ):
         """
 
@@ -30,23 +61,26 @@ class DeepNN:
         :param numLayers: Number of layers
         :param numTargetVariables: Number of target variables
         :param numExoVariables: Number of exogenous variables
-        :param modelLoadPath: If specified, then all provided parameters are ignored,
-        and the model is loaded from the path
+        :param loadModel: True or False - do not use this parameter !,
+        this is for internal use only (i.e. it is an implementation detail)
+        If True, then object is normally created, else object is created
+        without any member values being created. This is used when model
+        is created by the static load method
         """
 
-        if modelLoadPath is not None:
-            self.load(modelLoadPath)
-        else:
-            self.forecastHorizon = forecastHorizon
-            self.lag = lag
-            self.activation = activation
-            self.numUnitsPerLayer = numUnitsPerLayer
-            self.numLayers = numLayers
-            self.numTargetVariables = numTargetVariables
-            self.numExoVariables = numExoVariables
+        if loadModel:
+            return
 
-            self.model = None
-            self.buildModel()
+        self.forecastHorizon = forecastHorizon
+        self.lag = lag
+        self.activation = activation
+        self.numUnitsPerLayer = numUnitsPerLayer
+        self.numLayers = numLayers
+        self.numTargetVariables = numTargetVariables
+        self.numExoVariables = numExoVariables
+
+        self.model = None
+        self.buildModel()
 
     def train(
             self,
@@ -155,7 +189,7 @@ class DeepNN:
         V.imp: Predicted value is NOT outputted for the first lag - 1 inputs,
         since then networks begins predicting from the lag term onwards. Also
         the last forecastHorizon terms are not taken as the input, they are
-        taken as part of the true output which would be used for evalutation
+        taken as part of the true output which would be used for evaluation
 
         :param targetSeries: Multivariate Series of the Target Variable, it
         should be a numpy array of shape
@@ -226,41 +260,10 @@ class DeepNN:
             'weights': self.model.get_weights()
         }
 
-        saveFile = open(modelSavePath, 'wb')
-        pickle.dump(saveDict, saveFile)
-        saveFile.close()
+        with open(modelSavePath, 'wb') as fl:
+            pickle.dump(saveDict, fl)
 
         GlobalLogger.getLogger().log('Saving Complete', 1, self.save.__name__)
-
-    def load(
-            self,
-            modelLoadPath
-    ):
-        """
-        Load the model parameters from the provided path
-
-        :param modelLoadPath: Path from where the parameters are to be loaded
-        :return: None
-        """
-
-        GlobalLogger.getLogger().log('Loading Model', 1, self.load.__name__)
-
-        loadFile = open(modelLoadPath, 'rb')
-        loadDict = pickle.load(loadFile)
-        loadFile.close()
-
-        self.forecastHorizon = loadDict['forecastHorizon']
-        self.lag = loadDict['lag']
-        self.activation = loadDict['activation']
-        self.numUnitsPerLayer = loadDict['numUnitsPerLayer']
-        self.numLayers = loadDict['numLayers']
-        self.numTargetVariables = loadDict['numTargetVariables']
-        self.numExoVariables = loadDict['numExoVariables']
-
-        self.buildModel()
-        self.model.set_weights(loadDict['weights'])
-
-        GlobalLogger.getLogger().log('Loading Complete', 1, self.load.__name__)
 
     def buildModel(self):
         """ Builds Model Architecture """

@@ -10,6 +10,46 @@ from ts.log import GlobalLogger, ConsoleLogger
 
 class ExtremeTime2:
 
+    @staticmethod
+    def load(modelLoadPath):
+        """
+        Loads the model from the provided filepath
+
+        :param modelLoadPath: path from where to load the model
+        :return: model which is loaded from the given path
+        """
+
+        logger = GlobalLogger.getLogger()
+
+        model = ExtremeTime2(loadModel=True)
+
+        with open(modelLoadPath, 'rb') as fl:
+            logger.log(
+                'Load Dictionary from Model Params file',
+                1, ExtremeTime2.load.__name__
+            )
+            loadDict = pickle.load(fl)
+
+        logger.log('Loading Params', 1, ExtremeTime2.load.__name__)
+
+        model.forecastHorizon = loadDict['forecastHorizon']
+        model.memorySize = loadDict['memorySize']
+        model.windowSize = loadDict['windowSize']
+        model.inputDimension = loadDict['inputDimension']
+        model.embeddingSize = loadDict['embeddingSize']
+        model.contextSize = loadDict['contextSize']
+        model.memory = loadDict['memory']
+        model.context = loadDict['context']
+
+        model.buildModel()
+        model.gruInput.set_weights(loadDict['gruInput'])
+        model.gruMemory.set_weights(loadDict['gruMemory'])
+        model.gruContext.set_weights(loadDict['gruContext'])
+        model.outDense.set_weights(loadDict['outDense'])
+        model.state = loadDict['state']
+
+        return model
+
     def __init__(
             self,
             forecastHorizon=1,
@@ -18,7 +58,7 @@ class ExtremeTime2:
             embeddingSize=10,
             contextSize=10,
             numExoVariables=0,
-            modelLoadPath=None
+            loadModel=False
     ):
         """
         Initialize the model parameters and hyperparameters
@@ -31,34 +71,37 @@ class ExtremeTime2:
         :param embeddingSize: Size of the hidden state of the GRU encoder
         :param contextSize: Size of context produced from historical sequences
         :param numExoVariables: Number of exogenous variables the model takes as input
-        :param modelLoadPath: If specified, then all provided parameters are ignored,
-        and the model is loaded from the path
+        :param loadModel: True or False - do not use this parameter !,
+        this is for internal use only (i.e. it is an implementation detail)
+        If True, then object is normally created, else object is created
+        without any member values being created. This is used when model
+        is created by the static load method
         """
 
         tf.keras.backend.set_floatx('float64')
 
-        if modelLoadPath is not None:
-            self.load(modelLoadPath)
-        else:
-            logger = GlobalLogger.getLogger()
-            logger.log('Initializing Members', 1, self.__init__.__name__)
+        if loadModel:
+            return
 
-            self.forecastHorizon = forecastHorizon
-            self.memorySize = memorySize
-            self.windowSize = windowSize
-            self.embeddingSize = embeddingSize
-            self.contextSize = contextSize
-            self.inputDimension = numExoVariables + 1
-            self.memory = None
-            self.context = None
+        logger = GlobalLogger.getLogger()
+        logger.log('Initializing Members', 1, self.__init__.__name__)
 
-            logger.log('Building Model Parameters', 1, self.__init__.__name__)
+        self.forecastHorizon = forecastHorizon
+        self.memorySize = memorySize
+        self.windowSize = windowSize
+        self.embeddingSize = embeddingSize
+        self.contextSize = contextSize
+        self.inputDimension = numExoVariables + 1
+        self.memory = None
+        self.context = None
 
-            self.outDense = self.gruContext = self.gruMemory = self.gruInput = None
-            self.buildModel()
-            self.state = self.getInitialState()
+        logger.log('Building Model Parameters', 1, self.__init__.__name__)
 
-            logger.log(f'state shape: {self.state.shape}', 2, self.predict.__name__)
+        self.outDense = self.gruContext = self.gruMemory = self.gruInput = None
+        self.buildModel()
+        self.state = self.getInitialState()
+
+        logger.log(f'state shape: {self.state.shape}', 2, self.predict.__name__)
 
     def train(
             self,
@@ -275,41 +318,6 @@ class ExtremeTime2:
         fl = open(modelSavePath, 'wb')
         pickle.dump(saveDict, fl)
         fl.close()
-
-    def load(
-            self,
-            modelLoadPath
-    ):
-        """
-        Load the model parameters from the provided path
-        :param modelLoadPath: Path from where the parameters are to be loaded
-        :return: None
-        """
-
-        logger = GlobalLogger.getLogger()
-        logger.log('Load Dictionary from Model Params file', 1, self.load.__name__)
-
-        fl = open(modelLoadPath, 'rb')
-        loadDict = pickle.load(fl)
-        fl.close()
-
-        logger.log('Loading Params', 1, self.load.__name__)
-
-        self.forecastHorizon = loadDict['forecastHorizon']
-        self.memorySize = loadDict['memorySize']
-        self.windowSize = loadDict['windowSize']
-        self.inputDimension = loadDict['inputDimension']
-        self.embeddingSize = loadDict['embeddingSize']
-        self.contextSize = loadDict['contextSize']
-        self.memory = loadDict['memory']
-        self.context = loadDict['context']
-
-        self.buildModel()
-        self.gruInput.set_weights(loadDict['gruInput'])
-        self.gruMemory.set_weights(loadDict['gruMemory'])
-        self.gruContext.set_weights(loadDict['gruContext'])
-        self.outDense.set_weights(loadDict['outDense'])
-        self.state = loadDict['state']
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
         """

@@ -1,10 +1,41 @@
+import pickle
 import tensorflow as tf
 
 from ts.model.rnn_forecast import RnnForecast
+from ts.log import GlobalLogger
 
 
 class SimpleRnnForecast(RnnForecast):
     """ Simple RNN univariate forecasting model """
+
+    @staticmethod
+    def load(modelLoadPath):
+        """
+        Loads the model from the provided filepath
+
+        :param modelLoadPath: path from where to load the model
+        :return: model which is loaded from the given path
+        """
+
+        model = SimpleRnnForecast(loadModel=True)
+        GlobalLogger.getLogger().log('Loading Model', 1, SimpleRnnForecast.load.__name__)
+
+        with open(modelLoadPath, 'rb') as loadFile:
+            loadDict = pickle.load(loadFile)
+
+        model.forecastHorizon = loadDict['forecastHorizon']
+        model.layerClass = loadDict['layerClass']
+        model.layerParameters = loadDict['layerParameters']
+        model.numRnnLayers = loadDict['numRnnLayers']
+        model.numTargetVariables = loadDict['numTargetVariables']
+        model.numExoVariables = loadDict['numExoVariables']
+
+        model.buildModel()
+        model.model.set_weights(loadDict['weights'])
+
+        GlobalLogger.getLogger().log('Loading Complete', 1, SimpleRnnForecast.load.__name__)
+
+        return model
 
     def __init__(
             self,
@@ -14,7 +45,7 @@ class SimpleRnnForecast(RnnForecast):
             numRnnLayers=1,
             numTargetVariables=1,
             numExoVariables=0,
-            modelLoadPath=None
+            loadModel=False
     ):
         """
         Initialize Simple RNN Forecasting model using the given parameters
@@ -26,9 +57,15 @@ class SimpleRnnForecast(RnnForecast):
         :param numRnnLayers: Number of GRU layers of the model
         :param numTargetVariables: Number of target variables the model takes as input
         :param numExoVariables: Number of exogenous variables the model takes as input
-        :param modelLoadPath: If specified, then all provided parameters are ignored,
-        and the model is loaded from the path
+        :param loadModel: True or False - do not use this parameter !,
+        this is for internal use only (i.e. it is an implementation detail)
+        If True, then object is normally created, else object is created
+        without any member values being created. This is used when model
+        is created by the static load method
         """
+
+        if loadModel:
+            return
 
         simpleRnnParam = {
             'units': stateSize,
@@ -42,8 +79,7 @@ class SimpleRnnForecast(RnnForecast):
             simpleRnnParam,
             numRnnLayers,
             numTargetVariables,
-            numExoVariables,
-            modelLoadPath
+            numExoVariables
         )
 
     """

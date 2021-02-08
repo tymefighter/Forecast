@@ -10,6 +10,48 @@ from ts.log import GlobalLogger, ConsoleLogger
 
 class ExtremeTime:
 
+    @staticmethod
+    def load(modelLoadPath):
+        """
+        Loads the model from the provided filepath
+
+        :param modelLoadPath: path from where to load the model
+        :return: model which is loaded from the given path
+        """
+
+        logger = GlobalLogger.getLogger()
+
+        model = ExtremeTime(loadModel=True)
+
+        with open(modelLoadPath, 'rb') as fl:
+            logger.log(
+                'Load Dictionary from Model Params file',
+                1, ExtremeTime.load.__name__
+            )
+            loadDict = pickle.load(fl)
+
+        logger.log('Loading Params', 1, ExtremeTime.load.__name__)
+
+        model.forecastHorizon = loadDict['forecastHorizon']
+        model.memorySize = loadDict['memorySize']
+        model.windowSize = loadDict['windowSize']
+        model.inputDimension = loadDict['inputDimension']
+        model.encoderStateSize = loadDict['encoderStateSize']
+        model.lstmStateSize = loadDict['lstmStateSize']
+        model.memory = loadDict['memory']
+        model.q = loadDict['q']
+
+        model.buildModel()
+        model.gruEncoder.set_weights(loadDict['gruEncoder'])
+        model.lstm.set_weights(loadDict['lstm'])
+        model.outDense.set_weights(loadDict['outDense'])
+        model.embeddingDense.set_weights(loadDict['embeddingDense'])
+
+        model.lstmStateList = loadDict['lstmStateList']
+        model.b = tf.Variable(loadDict['b'])
+
+        return model
+
     def __init__(
             self,
             forecastHorizon=1,
@@ -18,7 +60,7 @@ class ExtremeTime:
             encoderStateSize=10,
             lstmStateSize=10,
             numExoVariables=0,
-            modelLoadPath=None
+            loadModel=False
     ):
         """
         Initialize the model parameters and hyperparameters
@@ -32,41 +74,44 @@ class ExtremeTime:
         :param encoderStateSize: Size of the hidden state of the GRU encoder
         :param lstmStateSize: Size of the hidden state of the LSTM used in the model
         :param numExoVariables: Number of exogenous variables the model takes as input
-        :param modelLoadPath: If specified, then all provided parameters are ignored,
-        and the model is loaded from the path
+        :param loadModel: True or False - do not use this parameter !,
+        this is for internal use only (i.e. it is an implementation detail)
+        If True, then object is normally created, else object is created
+        without any member values being created. This is used when model
+        is created by the static load method
         """
 
         tf.keras.backend.set_floatx('float64')
 
-        if modelLoadPath is not None:
-            self.load(modelLoadPath)
-        else:
-            logger = GlobalLogger.getLogger()
-            logger.log('Initializing Members', 1, self.__init__.__name__)
+        if loadModel:
+            return
 
-            self.forecastHorizon = forecastHorizon
-            self.memorySize = memorySize
-            self.windowSize = windowSize
-            self.encoderStateSize = encoderStateSize
-            self.lstmStateSize = lstmStateSize
-            self.inputDimension = numExoVariables + 1
-            self.memory = None
-            self.q = None
+        logger = GlobalLogger.getLogger()
+        logger.log('Initializing Members', 1, self.__init__.__name__)
 
-            logger.log('Building Model Parameters', 1, self.__init__.__name__)
+        self.forecastHorizon = forecastHorizon
+        self.memorySize = memorySize
+        self.windowSize = windowSize
+        self.encoderStateSize = encoderStateSize
+        self.lstmStateSize = lstmStateSize
+        self.inputDimension = numExoVariables + 1
+        self.memory = None
+        self.q = None
 
-            self.lstm = self.gruEncoder = None
-            self.outDense = self.embeddingDense = None
-            self.buildModel()
+        logger.log('Building Model Parameters', 1, self.__init__.__name__)
 
-            self.lstmStateList = self.getInitialLstmStates()
-            logger.log(
-                f'LSTM state shapes: {self.lstmStateList[0].shape}, {self.lstmStateList[1].shape}',
-                2,
-                self.predict.__name__
-            )
+        self.lstm = self.gruEncoder = None
+        self.outDense = self.embeddingDense = None
+        self.buildModel()
 
-            self.b = tf.Variable(0, dtype=tf.float64)
+        self.lstmStateList = self.getInitialLstmStates()
+        logger.log(
+            f'LSTM state shapes: {self.lstmStateList[0].shape}, {self.lstmStateList[1].shape}',
+            2,
+            self.predict.__name__
+        )
+
+        self.b = tf.Variable(0, dtype=tf.float64)
 
     def train(
             self,
@@ -287,47 +332,8 @@ class ExtremeTime:
 
         logger.log('Saving Dictionary', 1, self.save.__name__)
 
-        fl = open(modelSavePath, 'wb')
-        pickle.dump(saveDict, fl)
-        fl.close()
-
-    def load(
-            self,
-            modelLoadPath
-    ):
-        """
-        Load the model parameters from the provided path
-
-        :param modelLoadPath: Path from where the parameters are to be loaded
-        :return: None
-        """
-
-        logger = GlobalLogger.getLogger()
-        logger.log('Load Dictionary from Model Params file', 1, self.load.__name__)
-
-        fl = open(modelLoadPath, 'rb')
-        loadDict = pickle.load(fl)
-        fl.close()
-
-        logger.log('Loading Params', 1, self.load.__name__)
-
-        self.forecastHorizon = loadDict['forecastHorizon']
-        self.memorySize = loadDict['memorySize']
-        self.windowSize = loadDict['windowSize']
-        self.inputDimension = loadDict['inputDimension']
-        self.encoderStateSize = loadDict['encoderStateSize']
-        self.lstmStateSize = loadDict['lstmStateSize']
-        self.memory = loadDict['memory']
-        self.q = loadDict['q']
-
-        self.buildModel()
-        self.gruEncoder.set_weights(loadDict['gruEncoder'])
-        self.lstm.set_weights(loadDict['lstm'])
-        self.outDense.set_weights(loadDict['outDense'])
-        self.embeddingDense.set_weights(loadDict['embeddingDense'])
-
-        self.lstmStateList = loadDict['lstmStateList']
-        self.b = tf.Variable(loadDict['b'])
+        with open(modelSavePath, 'wb') as fl:
+            pickle.dump(saveDict, fl)
 
     def trainSequence(self, X, Y, seqStartTime, seqEndTime, optimizer):
         """

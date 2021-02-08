@@ -24,7 +24,7 @@ class GmmHmmLikelihoodSimilarity:
 
         model = GmmHmmLikelihoodSimilarity(
             None, None, None,
-            loadFromFile=True
+            loadModel=True
         )
 
         with open(modelLoadPath, 'rb') as fl:
@@ -45,7 +45,7 @@ class GmmHmmLikelihoodSimilarity:
             threshold=1e-7,
             covariance_type='full',
             verbose=False,
-            loadFromFile=False
+            loadModel=False
     ):
         """
         Initialize GMM-HMM model using the provided parameters, note that
@@ -66,12 +66,14 @@ class GmmHmmLikelihoodSimilarity:
         :param verbose: if True, then display training info, else
         do not display training info (training info: log likelihood
         at each iteration)
-        :param loadFromFile: True or False - do not use this parameter !,
+        :param loadModel: True or False - do not use this parameter !,
         this is for internal use only (i.e. it is an implementation detail)
+        If True, then object is normally created, else object is created
+        without any member values being created. This is used when model
+        is created by the static load method
         """
 
-        if loadFromFile:
-            self.model = self.dimension = None
+        if loadModel:
             return
 
         self.model = hmm.GMMHMM(

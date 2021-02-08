@@ -13,13 +13,35 @@ class RecurrentForecast:
     of layers to be provided
     """
 
+    @staticmethod
+    def load(modelLoadDir):
+        """
+        Loads the model from the provided directory path
+
+        :param modelLoadDir: Directory from where the model should be loaded
+        :return: model which is loaded from the given path
+        """
+
+        model = RecurrentForecast(None, None, loadModel=True)
+
+        model.model = tf.keras.models.load_model(modelLoadDir)
+
+        with open(os.path.join(modelLoadDir, 'hyperparam'), 'rb') as loadFile:
+            loadDict = pickle.load(loadFile)
+
+        model.forecastHorizon = loadDict['forecastHorizon']
+        model.numTargetVariables = loadDict['numTargetVariables']
+        model.numExoVariables = loadDict['numExoVariables']
+
+        return model
+
     def __init__(
             self,
             forecastHorizon,
             layerList,
             numTargetVariables=1,
             numExoVariables=0,
-            modelLoadDir=None
+            loadModel=False
     ):
         """
         Initialize RNN-based Forecasting model using the given parameters
@@ -29,18 +51,22 @@ class RecurrentForecast:
         :param layerList: list of layers of the recurrent model
         :param numTargetVariables: Number of target variables the model takes as input
         :param numExoVariables: Number of exogenous variables the model takes as input
-        :param modelLoadDir: If not None, then model is loaded from this directory
+        :param loadModel: True or False - do not use this parameter !,
+        this is for internal use only (i.e. it is an implementation detail)
+        If True, then object is normally created, else object is created
+        without any member values being created. This is used when model
+        is created by the static load method
         """
 
-        if modelLoadDir is not None:
-            self.load(modelLoadDir)
-        else:
-            self.forecastHorizon = forecastHorizon
-            self.numTargetVariables = numTargetVariables
-            self.numExoVariables = numExoVariables
+        if loadModel:
+            return
 
-            self.model = None
-            self.buildModel(layerList)
+        self.forecastHorizon = forecastHorizon
+        self.numTargetVariables = numTargetVariables
+        self.numExoVariables = numExoVariables
+
+        self.model = None
+        self.buildModel(layerList)
 
     def train(
             self,
@@ -220,20 +246,3 @@ class RecurrentForecast:
         saveFile = open(os.path.join(modelSaveDir, 'hyperparam'), 'wb')
         pickle.dump(saveDict, saveFile)
         saveFile.close()
-
-    def load(self, modelLoadDir):
-        """
-        Loads the model from the provided directory path
-
-        :param modelLoadDir: Directory from where the model should be loaded
-        """
-
-        self.model = tf.keras.models.load_model(modelLoadDir)
-
-        loadFile = open(os.path.join(modelLoadDir, 'hyperparam'), 'rb')
-        loadDict = pickle.load(loadFile)
-        loadFile.close()
-
-        self.forecastHorizon = loadDict['forecastHorizon']
-        self.numTargetVariables = loadDict['numTargetVariables']
-        self.numExoVariables = loadDict['numExoVariables']
