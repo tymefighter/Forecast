@@ -3,7 +3,7 @@ import numpy as np
 from hmmlearn import hmm
 
 
-class GmmHmmLikelihoodBased:
+class GmmHmmLikelihoodSimilarity:
     """
     GMM-HMM forecasting model based on the paper:
     "Stock Market Forecasting Using Hidden Markov Model: A New Approach
@@ -22,7 +22,7 @@ class GmmHmmLikelihoodBased:
         :return: model which is loaded from the given path
         """
 
-        model = GmmHmmLikelihoodBased(
+        model = GmmHmmLikelihoodSimilarity(
             None, None, None,
             loadFromFile=True
         )
