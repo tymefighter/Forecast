@@ -176,11 +176,14 @@ ts/
 |    |__ GlobalLogger
 |
 |__ test/
+|    |__ utility/..
 |
 |__ utility/
 |    |__ Utility
 |    |__ ForecastDataSequence
 |    |__ SaveCallback
+|    |__ DatasetUtility
+|    |__ Metric
 ```
 
 ## Repository Structure
