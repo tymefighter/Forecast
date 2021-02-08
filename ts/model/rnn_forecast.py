@@ -12,6 +12,35 @@ class RnnForecast:
     be provided as input
     """
 
+    @staticmethod
+    def load(modelLoadPath):
+        """
+        Loads the model from the provided filepath
+
+        :param modelLoadPath: path from where to load the model
+        :return: model which is loaded from the given path
+        """
+
+        model = RnnForecast(None, None, None, loadModel=True)
+        GlobalLogger.getLogger().log('Loading Model', 1, RnnForecast.load.__name__)
+
+        with open(modelLoadPath, 'rb') as loadFile:
+            loadDict = pickle.load(loadFile)
+
+        model.forecastHorizon = loadDict['forecastHorizon']
+        model.layerClass = loadDict['layerClass']
+        model.layerParameters = loadDict['layerParameters']
+        model.numRnnLayers = loadDict['numRnnLayers']
+        model.numTargetVariables = loadDict['numTargetVariables']
+        model.numExoVariables = loadDict['numExoVariables']
+
+        model.buildModel()
+        model.model.set_weights(loadDict['weights'])
+
+        GlobalLogger.getLogger().log('Loading Complete', 1, RnnForecast.load.__name__)
+
+        return model
+
     def __init__(
             self,
             forecastHorizon,
@@ -20,7 +49,7 @@ class RnnForecast:
             numRnnLayers=1,
             numTargetVariables=1,
             numExoVariables=0,
-            modelLoadPath=None
+            loadModel=False
     ):
         """
         Initialize RNN-based Forecasting model using the given parameters
@@ -32,22 +61,25 @@ class RnnForecast:
         :param numRnnLayers: Number of RNN based layers of the model
         :param numTargetVariables: Number of target variables the model takes as input
         :param numExoVariables: Number of exogenous variables the model takes as input
-        :param modelLoadPath: If specified, then all provided parameters are ignored,
-        and the model is loaded from the path
+        :param loadModel: True or False - do not use this parameter !,
+        this is for internal use only (i.e. it is an implementation detail)
+        If True, then object is normally created, else object is created
+        without any member values being created. This is used when model
+        is created by the static load method
         """
 
-        if modelLoadPath is not None:
-            self.load(modelLoadPath)
-        else:
-            self.forecastHorizon = forecastHorizon
-            self.layerClass = layerClass
-            self.layerParameters = layerParameters
-            self.numRnnLayers = numRnnLayers
-            self.numTargetVariables = numTargetVariables
-            self.numExoVariables = numExoVariables
-            self.model = None
+        if loadModel:
+            return
 
-            self.buildModel()
+        self.forecastHorizon = forecastHorizon
+        self.layerClass = layerClass
+        self.layerParameters = layerParameters
+        self.numRnnLayers = numRnnLayers
+        self.numTargetVariables = numTargetVariables
+        self.numExoVariables = numExoVariables
+        self.model = None
+
+        self.buildModel()
 
     def train(
             self,
@@ -223,35 +255,6 @@ class RnnForecast:
         saveFile.close()
 
         GlobalLogger.getLogger().log('Saving Complete', 1, self.save.__name__)
-
-    def load(
-            self,
-            modelLoadPath
-    ):
-        """
-        Load the model parameters from the provided path
-
-        :param modelLoadPath: Path from where the parameters are to be loaded
-        :return: None
-        """
-
-        GlobalLogger.getLogger().log('Loading Model', 1, self.load.__name__)
-
-        loadFile = open(modelLoadPath, 'rb')
-        loadDict = pickle.load(loadFile)
-        loadFile.close()
-
-        self.forecastHorizon = loadDict['forecastHorizon']
-        self.layerClass = loadDict['layerClass']
-        self.layerParameters = loadDict['layerParameters']
-        self.numRnnLayers = loadDict['numRnnLayers']
-        self.numTargetVariables = loadDict['numTargetVariables']
-        self.numExoVariables = loadDict['numExoVariables']
-
-        self.buildModel()
-        self.model.set_weights(loadDict['weights'])
-
-        GlobalLogger.getLogger().log('Loading Complete', 1, self.load.__name__)
 
     def buildModel(self):
         """ Builds Model Architecture """
