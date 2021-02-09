@@ -1,5 +1,4 @@
 import pytest
-import random
 import numpy as np
 from ts.utility import Metric
 
@@ -49,6 +48,14 @@ def sampleAboutZero(n: int, d: int, minAbs: float, maxAbs: float):
     )
 ], ids=['data-pos-0', 'data-pos-1', 'data-neg-0', 'data-mix-0'])
 def test_mape(forecastSeq: np.ndarray, actualSeq: np.ndarray):
+    """
+    Tests the MAPE metric
+    https://en.wikipedia.org/wiki/Mean_absolute_percentage_error
+
+    :param forecastSeq: Forecast (Predicted) sequence, a numpy array
+    of shape (n, d)
+    :param actualSeq: Actual sequence, a numpy array of shape (n, d)
+    """
 
     assert forecastSeq.shape == actualSeq.shape
     assert len(forecastSeq.shape) == 2
@@ -81,6 +88,14 @@ def test_mape(forecastSeq: np.ndarray, actualSeq: np.ndarray):
     ),
 ], ids=['data-0', 'data-1', 'data-2', 'data-3'])
 def test_mae(forecastSeq: np.ndarray, actualSeq: np.ndarray):
+    """
+    Tests the MAE metric
+    https://en.wikipedia.org/wiki/Mean_absolute_error
+
+    :param forecastSeq: Forecast (Predicted) sequence, a numpy array
+    of shape (n, d)
+    :param actualSeq: Actual sequence, a numpy array of shape (n, d)
+    """
 
     assert forecastSeq.shape == actualSeq.shape
     assert len(forecastSeq.shape) == 2
@@ -110,6 +125,14 @@ def test_mae(forecastSeq: np.ndarray, actualSeq: np.ndarray):
     )
 ], ids=['data-pos-0', 'data-pos-1', 'data-neg-0', 'data-mix-0'])
 def test_mpe(forecastSeq: np.ndarray, actualSeq: np.ndarray):
+    """
+    Tests the MPE metric
+    https://en.wikipedia.org/wiki/Mean_percentage_error
+
+    :param forecastSeq: Forecast (Predicted) sequence, a numpy array
+    of shape (n, d)
+    :param actualSeq: Actual sequence, a numpy array of shape (n, d)
+    """
 
     assert forecastSeq.shape == actualSeq.shape
     assert len(forecastSeq.shape) == 2
@@ -142,6 +165,14 @@ def test_mpe(forecastSeq: np.ndarray, actualSeq: np.ndarray):
     ),
 ], ids=['data-0', 'data-1', 'data-2', 'data-3'])
 def test_mse(forecastSeq: np.ndarray, actualSeq: np.ndarray):
+    """
+    Tests the MSE metric
+    https://en.wikipedia.org/wiki/Mean_squared_error
+
+    :param forecastSeq: Forecast (Predicted) sequence, a numpy array
+    of shape (n, d)
+    :param actualSeq: Actual sequence, a numpy array of shape (n, d)
+    """
 
     assert forecastSeq.shape == actualSeq.shape
     assert len(forecastSeq.shape) == 2
@@ -171,6 +202,14 @@ def test_mse(forecastSeq: np.ndarray, actualSeq: np.ndarray):
     ),
 ], ids=['data-0', 'data-1', 'data-2', 'data-3'])
 def test_mse(forecastSeq: np.ndarray, actualSeq: np.ndarray):
+    """
+    Tests the RMSE metric
+    https://en.wikipedia.org/wiki/Root-mean-square_deviation
+
+    :param forecastSeq: Forecast (Predicted) sequence, a numpy array
+    of shape (n, d)
+    :param actualSeq: Actual sequence, a numpy array of shape (n, d)
+    """
 
     assert forecastSeq.shape == actualSeq.shape
     assert len(forecastSeq.shape) == 2
