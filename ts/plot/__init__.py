@@ -1,1 +1,1 @@
-from ts.plot.static_plot import Plot
+from ts.plot.plot import Plot
