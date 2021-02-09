@@ -1,7 +1,7 @@
 import numpy as np
 
 from ts.data.generate.univariate.nonexo import *
-from ts.plot.static_plot import Plot
+from ts.plot.plot import Plot
 
 
 def main():
