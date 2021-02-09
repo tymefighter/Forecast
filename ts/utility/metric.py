@@ -75,6 +75,7 @@ class Metric:
     def rmse(forecastSeq: np.ndarray, actualSeq: np.ndarray):
         """
         Root Mean Squared Error
+        https://en.wikipedia.org/wiki/Root-mean-square_deviation
 
         :param forecastSeq: Forecast (Predicted) sequence, a numpy array
         of shape (n, d)
