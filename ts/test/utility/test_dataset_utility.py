@@ -14,6 +14,13 @@ testDataDir = './utility/testdata'
     ('data3.csv', '%m-%d-%Y')
 ])
 def test_sortByDate(filename, dateFormat):
+    """
+    Tests the sortByDate static method of DatasetUtility
+
+    :param filename: filename of the file containing the test data
+    :param dateFormat: format of the date present in the dataset
+    """
+
     filepath = os.path.join(testDataDir, filename)
     df = pd.read_csv(filepath)
 

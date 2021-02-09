@@ -4,16 +4,16 @@ import tensorflow as tf
 class SaveCallback(tf.keras.callbacks.Callback):
     """ Class to save model after each epoch """
 
-    def __init__(self, model, modelSavePath):
+    def __init__(self, modelSave, modelSavePath):
         """
         Initialize SaveCallback Class Members
 
-        :param model: The forecasting model itself
+        :param modelSave: The forecasting model itself
         :param modelSavePath: Path where to save the model
         """
 
         super().__init__()
-        self.model = model
+        self.modelSave = modelSave
         self.modelSavePath = modelSavePath
 
     def on_epoch_end(self, epoch, logs=None):
@@ -26,4 +26,4 @@ class SaveCallback(tf.keras.callbacks.Callback):
         :return: None
         """
 
-        self.model.save(self.modelSavePath)
+        self.modelSave.save(self.modelSavePath)

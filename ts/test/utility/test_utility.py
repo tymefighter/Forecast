@@ -14,6 +14,8 @@ from ts.data.generate.univariate.nonexo \
     (np.random.uniform(0, 100, size=(450, 5)), 1)
 ], ids=['1dim-0', '1dim-1', '1dim-2', '1dim-3', '2dim-0', '2dim-1'])
 def test_breakSeq(data: np.ndarray, seqLength: int):
+    """ Tests Utility.breakSeq """
+
     dataSeq = Utility.breakSeq(data, seqLength)
 
     # On concatenating the dataSeq, we should get back data
@@ -51,6 +53,8 @@ def test_breakTrainSeq(
         seqLength,
         forecastHorizon
 ):
+    """ Tests Utility.breakTrainSeq """
+
     n = targetSeries.shape[0]
 
     trainSequences = Utility.breakTrainSeq(
@@ -134,6 +138,8 @@ def test_breakTrainSeq(
     )
 ], ids=['nonexo-0', 'nonexo-1', 'nonexo-2', 'exo-0', 'exo-1'])
 def test_convertToTrainSeq(dataSequences, containsExo, forecastHorizon):
+    """ Tests Utility.convertToTrainSeq """
+
     trainSequences = \
         Utility.convertToTrainSeq(dataSequences, containsExo, forecastHorizon)
 
@@ -187,6 +193,7 @@ def test_convertToTrainSeq(dataSequences, containsExo, forecastHorizon):
         'val-0', 'val-1', 'val-2', 'val-3', 'val-4', 'val-5', 'val-6'
     ])
 def test_trainTestSplit(data, train, val):
+    """ Tests Utility.trainTestSplit """
 
     if train < 1.0:
         train = round(data.shape[0] * train)
@@ -251,6 +258,7 @@ def test_trainTestSplit(data, train, val):
     ),
 ], ids=['no_val-0', 'no_val-1', 'val-0', 'val-1', 'val-2', 'val-3'])
 def test_trainTestSplitSeries(targetSeries, exogenousSeries, train, val):
+    """ Tests Utility.trainTestSplitSeries """
 
     assert targetSeries.shape[0] == exogenousSeries.shape[0]
     n = targetSeries.shape[0]
@@ -310,6 +318,7 @@ def test_trainTestSplitSeries(targetSeries, exogenousSeries, train, val):
     )
 ], ids=['nonexo-0', 'nonexo-1', 'exo-0', 'exo-1', 'exo-2'])
 def test_prepareDataPred(targetSeries, exogenousSeries):
+    """ Tests Utility.prepareDataPred """
 
     if exogenousSeries is not None:
         assert targetSeries.shape[0] == exogenousSeries.shape[0]
@@ -369,6 +378,8 @@ def test_prepareDataPred(targetSeries, exogenousSeries):
     )
 ])
 def test_prepareDataTrain(targetSeries, exogenousSeries, forecastHorizon):
+    """ Tests Utility.prepareDataTrain """
+
     if exogenousSeries is not None:
         assert targetSeries.shape[0] == exogenousSeries.shape[0] + forecastHorizon
 
@@ -408,6 +419,7 @@ def test_prepareDataTrain(targetSeries, exogenousSeries, forecastHorizon):
     'invalid-0', 'invalid-1', 'invalid-2', 'invalid-3', 'invalid-4'
 ])
 def test_isExoShapeValid(exogenousSeries, numExoVariables, isValid):
+    """ Tests Utility.isExoShapeValid """
 
     assert Utility.isExoShapeValid(exogenousSeries, numExoVariables) == isValid
 
@@ -427,6 +439,8 @@ def test_generateMultipleSequence(
     minSequenceLength,
     maxSequenceLength
 ):
+    """ Tests Utility.generateMultipleSequence """
+
     dataSeq = Utility.generateMultipleSequence(
         dataGenerator,
         numSequences,
