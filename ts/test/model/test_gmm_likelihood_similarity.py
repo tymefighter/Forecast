@@ -1,7 +1,7 @@
 import pytest
 import os
 import numpy as np
-from ts.model import GmmHmmForecast
+from ts.model import GmmHmmLikelihoodSimilarity
 
 FILE_PATH = 'model/scratch/model'
 
@@ -12,17 +12,16 @@ def test_saveLoad():
     dim = 2
     xTrain = np.random.uniform(-1, 1, size=(100, dim))
     xTest = np.random.uniform(-1, 1, size=(20, dim))
-    discParamSet = [np.random.uniform(-1, 1, size=(5,)) for _ in range(dim)]
 
-    model = GmmHmmForecast(2, 2, dim, numIterations=2)
+    model = GmmHmmLikelihoodSimilarity(2, 2, dim, numIterations=2)
     model.train([xTrain])
-    predBeforeSave = model.predict(xTest, discParamSet)
+    predBeforeSave = model.predict(xTest)
 
     model.save(FILE_PATH)
     del model
 
-    model = GmmHmmForecast.load(FILE_PATH)
-    predAfterSave = model.predict(xTest, discParamSet)
+    model = GmmHmmLikelihoodSimilarity.load(FILE_PATH)
+    predAfterSave = model.predict(xTest)
 
     assert np.array_equal(predBeforeSave, predAfterSave)
 
@@ -47,13 +46,10 @@ def test_predictOutputShape(xTrain, xTest):
     """ Test the prediction output shape of this model """
 
     assert xTrain.shape[1] == xTest.shape[1]
-    latency = 2
     dim = xTrain.shape[1]
 
-    model = GmmHmmForecast(2, 2, dim, d=latency, numIterations=2)
+    model = GmmHmmLikelihoodSimilarity(2, 2, dim, numIterations=2)
     model.train([xTrain])
+    pred = model.predict(xTest)
 
-    discParamSet = [np.random.uniform(-1, 1, size=(5,)) for _ in range(dim)]
-    pred = model.predict(xTest, discParamSet)
-
-    assert pred.shape == (xTest.shape[0] - latency, dim)
+    assert pred.shape == xTest.shape
