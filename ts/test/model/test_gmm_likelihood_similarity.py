@@ -53,3 +53,76 @@ def test_predictOutputShape(xTrain, xTest):
     pred = model.predict(xTest)
 
     assert pred.shape == xTest.shape
+
+
+def genTest_ClosestLikelihoodObsDiff(
+    numTrainSeq, minLengthTrain, maxLengthTrain, dim, numLikelihoodQueries
+):
+    """
+    Generate Test Cases of test_ClosestLikelihoodObsDiff
+
+    :param numTrainSeq:
+    :param minLengthTrain:
+    :param maxLengthTrain:
+    :param dim:
+    :param numLikelihoodQueries:
+    :return:
+    """
+
+    trainSequences = [
+        np.random.uniform(-1, 1, size=(length, dim))
+        for length in list(np.random.randint(
+            minLengthTrain, maxLengthTrain, size=(numTrainSeq,)
+        ))
+    ]
+
+    model = GmmHmmLikelihoodSimilarity(2, 2, dim, numIterations=2)
+    model.train(trainSequences)
+
+    likelihoodObsDiff = model\
+        .closestLikelihoodObsDiff\
+        .likelihoodObsDiff
+
+    minVal = maxVal = None
+    for likelihood, _ in likelihoodObsDiff:
+        if minVal is None:
+            minVal = maxVal = likelihood
+        else:
+            minVal = min(minVal, likelihood)
+            maxVal = max(maxVal, likelihood)
+
+    likelihoodQueries = np.linspace(minVal, maxVal, numLikelihoodQueries)
+
+    return model, trainSequences, likelihoodQueries
+
+
+@pytest.mark.parametrize('model, trainSequences, likelihoodQueries', [
+    genTest_ClosestLikelihoodObsDiff(4, 20, 40, 10, 20),
+    genTest_ClosestLikelihoodObsDiff(3, 20, 30, 14, 25)
+], ids=['data-0', 'data-1'])
+def test_ClosestLikelihoodObsDiff(model, trainSequences, likelihoodQueries):
+    """ Test the 'ClosestLikelihoodObsDiff' Data Structure """
+
+    closestLikelihoodObsDiff = model.closestLikelihoodObsDiff
+
+    for logLikelihood in likelihoodQueries:
+        obsDiffClosestLikelihoodObsDiff = closestLikelihoodObsDiff\
+            .getClosestLikelihoodObsDiff(logLikelihood)
+
+        obsDiffCalc = None
+        minLogLikelihoodDiff = None
+
+        for seq in trainSequences:
+            for i in range(seq.shape[0] - 1):
+                currObs = seq[i]
+                nextObs = seq[i + 1]
+                currLogLikelihoodDiff = abs(model.model.score(
+                    np.expand_dims(currObs, axis=0)
+                ) - logLikelihood)
+
+                if minLogLikelihoodDiff is None \
+                        or minLogLikelihoodDiff >= currLogLikelihoodDiff:
+                    obsDiffCalc = nextObs - currObs
+                    minLogLikelihoodDiff = currLogLikelihoodDiff
+
+        assert np.array_equal(obsDiffClosestLikelihoodObsDiff, obsDiffCalc)
