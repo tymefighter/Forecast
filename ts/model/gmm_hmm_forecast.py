@@ -123,8 +123,9 @@ class GmmHmmForecast:
         :param discParamSet: for each of the 'dimension' number of components in
         an observation, there should be a numpy array of containing the discrete
         set of allowed values for that value i.e. for the ith component of the
-        observation vector, discParamSet[i] is a numpy array containing all the
-        values from which we predict this ith component.
+        observation vector, discParamSet[i] is a 1D python list or numpy array
+        of shape (ni,) containing all the values from which we predict this ith
+        component.
         :param returnMaxLikelihood: if True, our return value is
         (pred, maxLikelihoodValues), i.e. all the predictions, and the log
         likelihood of each prediction. if False, then our return value is
@@ -196,8 +197,9 @@ class GmmHmmForecast:
         :param discParamSet: for each of the 'dimension' number of components in
         an observation, there should be a numpy array of containing the discrete
         set of allowed values for that value i.e. for the ith component of the
-        observation vector, discParamSet[i] is a numpy array containing all the
-        values from which we predict this ith component.
+        observation vector, discParamSet[i] is a 1D python list or numpy array
+        of shape (ni,) containing all the values from which we predict this ith
+        component.
         :param idx: index of the component of x[d] whose value we are going to
         fix now, and recursively fix values of components idx+1 .. dimension-1
         such that they yield maximum likelihood

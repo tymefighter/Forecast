@@ -1,0 +1,7 @@
+This file describes the scratch directory
+
+The scratch directory is a directory where we temporarily save
+a file, load it and then delete it.
+
+Currently it is used only for running the tests in the test/utility
+directory
