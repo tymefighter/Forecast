@@ -3,6 +3,7 @@ import os
 import numpy as np
 from numpy.random import uniform, rand, randint
 from ts.model import DeepNN
+from ts.model.deep_nn import DnnDataSequence
 
 FILE_PATH = 'model/scratch/model'
 EPSILON = 1e-7
@@ -186,7 +187,7 @@ def test_prepareDataTrainDNN(
     X, Y = DeepNN.prepareDataTrainDNN(
         targetSeries, exogenousSeries, forecastHorizon, lag
     )
-    
+
     assert X.shape[0] == Y.shape[0] == numInputs
     assert X.shape[1] == (numTargetVariables + numExoVariables) * (lag + 1) \
         and Y.shape[1] == numTargetVariables
@@ -216,14 +217,80 @@ def test_prepareDataTrainDNN(
         uniform(-100, 100, size=(15, 5, 5)))
 ], ids=['data-0', 'data-1', 'data-2'])
 def test_lossFunc(Ytrue, Ypred):
+    """ Test the loss function of DeepNN """
 
     assert abs(
         DeepNN.lossFunc(Ytrue, Ypred).numpy()
         - np.mean(np.square(Ytrue - Ypred))) < EPSILON
 
 
-def test_DnnDataSequence():
-    pass
+@pytest.mark.parametrize(
+    'trainSequences, forecastHorizon, \
+    numTargetVariables, numExoVariables, lag', [
+        ([rand(length + 33, 4)
+          for length in list(randint(100, 120, size=(5,)))],
+         33, 4, 0, 12),
+        ([rand(length + 12, 5)
+          for length in list(randint(60, 70, size=(1,)))],
+         12, 5, 0, 3),
+        ([(rand(length + 4, 2), rand(length, 3))
+          for length in list(randint(60, 70, size=(9,)))],
+         4, 2, 3, 10),
+        ([(rand(length + 14, 5), rand(length, 5))
+          for length in list(randint(60, 70, size=(8,)))],
+         14, 5, 5, 5)
+    ], ids=['nonexo-0', 'nonexo-1', 'exo-0', 'exo-1'])
+def test_DnnDataSequence(
+    trainSequences, forecastHorizon,
+    numTargetVariables, numExoVariables, lag
+):
+    """
+    Test DnnDataSequence class
+
+    :param trainSequences: training sequences
+    :param forecastHorizon: forecast horizon
+    :param numTargetVariables: number of target variables
+    :param numExoVariables: number of exogenous variables
+    :param lag: lag value
+    """
+
+    dnnDataSequence = DnnDataSequence(
+        trainSequences, forecastHorizon,
+        numTargetVariables, numExoVariables, lag
+    )
+
+    assert len(dnnDataSequence) == len(trainSequences)
+    n = len(dnnDataSequence)
+
+    for idx in range(n):
+        seq = trainSequences[idx]
+        if numExoVariables == 0:
+            targetSeries = seq
+            exogenousSeries = None
+        else:
+            targetSeries = seq[0]
+            exogenousSeries = seq[1]
+
+        n = targetSeries.shape[0]
+        numInputs = n - lag - forecastHorizon
+
+        X, Y = dnnDataSequence[idx]
+        assert X.shape[0] == Y.shape[0] == numInputs
+        assert X.shape[1] == (numTargetVariables + numExoVariables) * (lag + 1) \
+            and Y.shape[1] == numTargetVariables
+
+        for i in range(lag, lag + numInputs):
+            x = []
+            for j in range(i - lag, i + 1):
+                x.append(targetSeries[j])
+                if exogenousSeries is not None:
+                    x.append(exogenousSeries[j])
+
+            x = np.concatenate(x, axis=0)
+            y = targetSeries[i + forecastHorizon]
+
+            assert np.array_equal(x, X[i - lag])
+            assert np.array_equal(y, Y[i - lag])
 
 
 @pytest.mark.parametrize(
