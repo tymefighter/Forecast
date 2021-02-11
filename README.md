@@ -176,6 +176,7 @@ ts/
 |    |__ GlobalLogger
 |
 |__ test/
+|    |__ model/..
 |    |__ utility/..
 |
 |__ utility/
