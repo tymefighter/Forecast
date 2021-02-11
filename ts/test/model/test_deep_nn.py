@@ -59,9 +59,52 @@ def test_saveLoad(trainSequences, testData, containsExo):
 
     os.remove(FILE_PATH)
 
+@pytest.mark.parametrize(
+    'numTargetVariables, numExoVariables, \
+    targetSeries, exogenousSeries, \
+    areShapesValid', [
+        (14, 0,
+            np.random.uniform(-1, 1, size=(100, 3)), None,
+            False),
+        (3, 5,
+            np.random.uniform(-1, 1, size=(100, 3)), None,
+            False),
+        (3, 0,
+            np.random.uniform(-1, 1, size=(100, 3)), None,
+            True),
+        (3, 0,
+            np.random.uniform(-1, 1, size=(100, 3, 1)), None,
+            False),
+        (3, 2,
+            np.random.uniform(-1, 1, size=(100, 3)),
+            np.random.uniform(-1, 1, size=(150, 2)),
+            True),
+        (3, 2,
+            np.random.uniform(-1, 1, size=(100, 3)),
+            np.random.uniform(-1, 1, size=(150, 2, 4)),
+            False),
+        (3, 2,
+            np.random.uniform(-1, 1, size=(100, 3, 3)),
+            np.random.uniform(-1, 1, size=(150, 2)),
+            False)
+    ], ids=[
+        'nonexo-0', 'nonexo-1', 'nonexo-2', 'nonexo-3',
+        'exo-0', 'exo-1', 'exo-2'
+    ])
+def test_checkShapeValid(
+    numTargetVariables, numExoVariables,
+    targetSeries, exogenousSeries,
+    areShapesValid
+):
+    """ Tests the checkShapeValid method of a DeepNN object """
 
-def test_checkShapeValid():
-    pass
+    model = DeepNN(
+        numTargetVariables=numTargetVariables,
+        numExoVariables=numExoVariables
+    )
+
+    assert areShapesValid == \
+           model.checkShapeValid(targetSeries, exogenousSeries)
 
 
 def test_prepareDataPredDNN():
@@ -93,6 +136,111 @@ def test_DnnDataSequence():
     pass
 
 
-def test_predEvalOutputShape():
-    """ Test the prediction and evaluation output shape of this model """
-    pass
+@pytest.mark.parametrize(
+    'forecastHorizon, lag, \
+    trainSequences, \
+    numTargetVariables, numExoVariables, \
+    targetTest, exoTest', [
+        (
+            12, 50,
+            [np.random.uniform(-10, 10, size=(length, 10))
+             for length in list(np.random.randint(100, 150, size=(5,)))],
+            10, 0,
+            np.random.uniform(-10, 10, size=(100, 10)), None
+        ),
+        (
+            15, 30,
+            [(
+                np.random.uniform(-10, 10, size=(length + 15, 10)),
+                np.random.uniform(-10, 10, size=(length, 3))
+            ) for length in list(np.random.randint(120, 150, size=(3,)))],
+            10, 3,
+            np.random.uniform(-10, 10, size=(100, 10)),
+            np.random.uniform(-10, 10, size=(100, 3))
+        )
+    ], ids=['nonexo', 'exo'])
+def test_predOutputShape(
+    forecastHorizon, lag,
+    trainSequences,
+    numTargetVariables, numExoVariables,
+    targetTest, exoTest
+):
+    """
+    Test the prediction and evaluation output shape of this model
+
+    :param forecastHorizon: forecast Horizon
+    :param lag: lag parameter for DNN Forecasting model
+    :param trainSequences: training Sequences for the model
+    :param numTargetVariables: number of target variables
+    :param numExoVariables: number of exogenous variables
+    :param targetTest: test target series
+    :param exoTest: test exogenous series (can be None)
+    """
+
+    model = DeepNN(
+        forecastHorizon=forecastHorizon,
+        lag=lag,
+        numTargetVariables=numTargetVariables,
+        numExoVariables=numExoVariables
+    )
+
+    model.train(trainSequences, returnLosses=False)
+
+    pred = model.predict(targetTest, exoTest)
+    assert pred.shape \
+           == (targetTest.shape[0] - lag, targetTest.shape[1])
+
+
+@pytest.mark.parametrize(
+    'forecastHorizon, lag, \
+    trainSequences, \
+    numTargetVariables, numExoVariables, \
+    targetEval, exoEval', [
+        (
+            12, 50,
+            [np.random.uniform(-10, 10, size=(length, 10))
+             for length in list(np.random.randint(100, 150, size=(5,)))],
+            10, 0,
+            np.random.uniform(-10, 10, size=(100, 10)), None
+        ),
+        (
+            15, 30,
+            [(
+                np.random.uniform(-10, 10, size=(length + 15, 10)),
+                np.random.uniform(-10, 10, size=(length, 3))
+            ) for length in list(np.random.randint(120, 150, size=(3,)))],
+            10, 3,
+            np.random.uniform(-10, 10, size=(115, 10)),
+            np.random.uniform(-10, 10, size=(100, 3))
+        )
+    ], ids=['nonexo', 'exo'])
+def test_evalOutputShape(
+    forecastHorizon, lag,
+    trainSequences,
+    numTargetVariables, numExoVariables,
+    targetEval, exoEval
+):
+    """
+    Test the prediction and evaluation output shape of this model
+
+    :param forecastHorizon: forecast Horizon
+    :param lag: lag parameter for DNN Forecasting model
+    :param trainSequences: training Sequences for the model
+    :param numTargetVariables: number of target variables
+    :param numExoVariables: number of exogenous variables
+    :param targetEval: eval target series
+    :param exoEval: eval exogenous series (can be None)
+    """
+
+    model = DeepNN(
+        forecastHorizon=forecastHorizon,
+        lag=lag,
+        numTargetVariables=numTargetVariables,
+        numExoVariables=numExoVariables
+    )
+
+    model.train(trainSequences, returnLosses=False)
+
+    _, evalOut = model.evaluate(targetEval, exoEval, returnPred=True)
+    assert evalOut.shape \
+           == (targetEval.shape[0] - forecastHorizon - lag, targetEval.shape[1])
