@@ -146,13 +146,13 @@ class DeepNN:
         """
         Forecast using the model parameters on the provided input data
 
-        V.imp: Predicted value is NOT outputted for the first lag - 1 inputs,
+        V.imp: Predicted value is NOT outputted for the first lag inputs,
         since then networks begins predicting from the lag term onwards
 
         :param targetSeries: Multivariate Series of the Target Variable, it
-        should be a numpy array of shape (lag - 1 + nPred, numTargetVariables)
+        should be a numpy array of shape (lag + nPred, numTargetVariables)
         :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (lag - 1 + nPred, numExoVariables), it can be None only if
+        numpy array of shape (lag + nPred, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not
         considered
         :return: Forecast targets predicted by the model, it has shape
@@ -186,19 +186,19 @@ class DeepNN:
         Forecast using the model parameters on the provided data, evaluates
         the forecast result using the loss and returns it
 
-        V.imp: Predicted value is NOT outputted for the first lag - 1 inputs,
+        V.imp: Predicted value is NOT outputted for the first lag inputs,
         since then networks begins predicting from the lag term onwards. Also
         the last forecastHorizon terms are not taken as the input, they are
         taken as part of the true output which would be used for evaluation
 
         :param targetSeries: Multivariate Series of the Target Variable, it
         should be a numpy array of shape
-        (self.lag - 1 + numTimesteps + self.forecastHorizon, numTargetVariables).
+        (self.lag + numTimesteps + self.forecastHorizon, numTargetVariables).
         numTimesteps is the number of timesteps on which our model must predict,
         the values ahead are for evaluating the predicted results with respect
         to them (i.e. they are true targets for our prediction)
         :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (self.lag - 1 + numTimesteps, numExoVariables), it can be None
+        numpy array of shape (self.lag + numTimesteps, numExoVariables), it can be None
         only if numExoVariables is 0 in which case the exogenous variables
         are not considered
         :param returnPred: If True, then return predictions along with loss, else
@@ -317,9 +317,9 @@ class DeepNN:
         Prepare Data For Prediction
 
         :param targetSeries: Multivariate Series of the Target Variable, it
-        should be a numpy array of shape (lag - 1 + nPred, numTargetVariables)
+        should be a numpy array of shape (lag + nPred, numTargetVariables)
         :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (lag - 1 + nPred, numExoVariables), it can be None only if
+        numpy array of shape (lag + nPred, numExoVariables), it can be None only if
         numExoVariables is 0 in which case the exogenous variables are not
         considered
         :param lag: The lag to be considered
@@ -352,9 +352,9 @@ class DeepNN:
         Prepare Data For Training
 
         :param targetSeries: Multivariate Series of the Target Variable, it
-        should be a numpy array of shape (lag - 1 + nTrain + forecastHorizon, numTargetVariables)
+        should be a numpy array of shape (lag + nTrain + forecastHorizon, numTargetVariables)
         :param exogenousSeries: Series of exogenous Variables, it should be a
-        numpy array of shape (lag - 1 + nTrain, numTargetVariables),
+        numpy array of shape (lag + nTrain, numTargetVariables),
         it can be None only if numExoVariables is 0 in which case the exogenous variables are not
         considered
         :param forecastHorizon: How much further in the future the model has to
