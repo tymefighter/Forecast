@@ -8,7 +8,10 @@ def isOdd(n: int) -> bool: return (n & 1) != 0
 class ClassicalDecompose:
 
     @staticmethod
-    def decompose(timeSeries, seasonalPeriod):
+    def decompose(
+            timeSeries: np.ndarray,
+            seasonalPeriod: int, additive: bool = True
+    ) -> (np.ndarray, np.ndarray, np.ndarray):
         """
         Decompose the provided time series using the classical
         time series decomposition method.
@@ -16,6 +19,8 @@ class ClassicalDecompose:
 
         :param timeSeries: time series which is to be decomposed
         :param seasonalPeriod: the seasonality period
+        :param additive: if True, then the model is assumed to be
+        additive, else it is assumed to be multiplicative
         :return: (trend series, seasonality series, remainder series)
         """
 
@@ -31,7 +36,11 @@ class ClassicalDecompose:
 
         (n, d) = timeSeries.shape
         seasonalValues = np.zeros((seasonalPeriod, d))
-        seasonalitySeries = timeSeries - trendSeries
+
+        if additive:
+            seasonalitySeries = timeSeries - trendSeries
+        else:
+            seasonalitySeries = timeSeries / trendSeries
 
         for currSeason in range(seasonalPeriod):
             numCurrSeasonValues = (n - currSeason - 1) // seasonalPeriod
@@ -43,9 +52,16 @@ class ClassicalDecompose:
 
             seasonalValues[currSeason, :] = currSeasonValues.mean(axis=0)
 
+        seasonalValues -= seasonalValues.mean(axis=0)
+        if not additive:
+            seasonalValues += 1
+
         for i in range(n):
             seasonalitySeries[i] = seasonalValues[i % seasonalPeriod]
 
-        remainderSeries = timeSeries - trendSeries - seasonalitySeries
+        if additive:
+            remainderSeries = timeSeries - trendSeries - seasonalitySeries
+        else:
+            remainderSeries = timeSeries / (trendSeries * seasonalitySeries)
 
         return trendSeries, seasonalitySeries, remainderSeries
