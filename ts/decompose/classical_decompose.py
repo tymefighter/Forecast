@@ -17,11 +17,15 @@ class ClassicalDecompose:
         time series decomposition method.
         Link: https://otexts.com/fpp2/classical-decomposition.html
 
-        :param timeSeries: time series which is to be decomposed
+        :param timeSeries: time series which is to be decomposed, it is
+        a numpy array of shape (n, d)
         :param seasonalPeriod: the seasonality period
         :param additive: if True, then the model is assumed to be
         additive, else it is assumed to be multiplicative
-        :return: (trend series, seasonality series, remainder series)
+        :return: (trend series, seasonality series, remainder series),
+        each element of this 3-tuple is a numpy array of shape (n1, d)
+        where n1 = (seasonalPeriod - 1) / 2 if seasonalPeriod is even,
+        else n1 = seasonalPeriod / 2
         """
 
         if isOdd(seasonalPeriod):
