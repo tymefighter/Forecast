@@ -1,3 +1,5 @@
+[![Build Status](https://www.travis-ci.com/tymefighter/Forecast.svg?branch=master)](https://www.travis-ci.com/tymefighter/Forecast.svg?branch=master)
+
 # Time Series Forecasting Package
 
 This is a `python` package containing Various Forecasting Algorithms,
