@@ -72,7 +72,7 @@ class GeneralizedParetoDistribution:
     @staticmethod
     def checkParam(shapeParam, scaleParam, data):
 
-        return np.all(1 + shapeParam * data / scaleParam > 0)
+        return scaleParam > 0 and np.all(1 + shapeParam * data / scaleParam > 0)
 
 
 class GpdEstimate:
@@ -131,8 +131,6 @@ class GpdEstimate:
     ):
         assert GeneralizedParetoDistribution\
             .checkParam(initShapeParam, initScaleParam, data)
-
-        n = data.shape[0]
 
         shapeParam, scaleParam = initShapeParam, initScaleParam
         negLogLikelihoods = np.zeros((numIterations,))
