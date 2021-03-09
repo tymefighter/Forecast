@@ -7,9 +7,11 @@ class GeneralizedParetoDistribution:
 
     def __init__(self, shapeParam, scaleParam):
         """
+        Creates instance of the Generalized Pareto Distribution
+        based on the shape and scale parameters provided
 
-        :param shapeParam:
-        :param scaleParam:
+        :param shapeParam: shape parameter of the distribution
+        :param scaleParam: scale parameter of the distribution
         """
 
         self.shapeParam = shapeParam
@@ -17,9 +19,11 @@ class GeneralizedParetoDistribution:
 
     def sample(self, sampleShape):
         """
+        Sample from the distribution
 
-        :param sampleShape:
-        :return:
+        :param sampleShape: shape of the sample
+        :return: data sampled from the distribution, it is a numpy array
+        of shape 'sampleShape'
         """
 
         return genpareto.rvs(
@@ -28,18 +32,20 @@ class GeneralizedParetoDistribution:
 
     def pdf(self, x):
         """
+        Computes the PDF at the provided data point
 
-        :param x:
-        :return:
+        :param x: data point at which to compute the PDF
+        :return: PDF at x
         """
 
         return genpareto.pdf(x, c=self.shapeParam, loc=0, scale=self.scaleParam)
 
     def cdf(self, x):
         """
+        Computes the CDF at the provided data point
 
-        :param x:
-        :return:
+        :param x: data point at which to compute the CDF
+        :return: CDF at x
         """
 
         return genpareto.cdf(x, c=self.shapeParam, loc=0, scale=self.scaleParam)
@@ -47,11 +53,12 @@ class GeneralizedParetoDistribution:
     @staticmethod
     def logLikelihood(shapeParam, scaleParam, data):
         """
+        Computes log likelihood of the data given the parameters
 
-        :param shapeParam:
-        :param scaleParam:
-        :param data:
-        :return:
+        :param shapeParam: shape parameter of the distribution
+        :param scaleParam: scale parameter of the distribution
+        :param data: data whose log likelihood is to be computed
+        :return: log likelihood of the data given the parameters
         """
 
         if scaleParam <= 0:
@@ -71,6 +78,15 @@ class GeneralizedParetoDistribution:
 
     @staticmethod
     def checkParam(shapeParam, scaleParam, data):
+        """
+        Check if the parameters are valid for the provided data
+
+        :param shapeParam: shape parameter of the distribution
+        :param scaleParam: scale parameter of the distribution
+        :param data: data with respect to which the validity of
+        the parameters is to be checked
+        :return: True, if the parameters are valid, False otherwise
+        """
 
         return scaleParam > 0 and np.all(1 + shapeParam * data / scaleParam > 0)
 
@@ -88,15 +104,25 @@ class GpdEstimate:
             numIterations=20
     ):
         """
+        PSO method for maximum likelihood estimation of GPD's parameters
 
-        :param data:
-        :param initialPos:
-        :param inertiaCoeff:
-        :param inertiaDamp:
-        :param personalCoeff:
-        :param socialCoeff:
-        :param numIterations:
-        :return:
+        :param data: the data, it is a numpy array of shape (n,)
+        :param initialPos: initial positions of the particles in the
+        parameter space, it is a numpy array of shape (numParticles, 2)
+        :param inertiaCoeff: coefficient used for updating the velocity
+        based on previous velocity
+        :param inertiaDamp: used for damping inertia coefficient after
+        every iteration.
+        :param personalCoeff: coefficient used for updating the velocity
+        based on personal best
+        :param socialCoeff: coefficient used for updating the velocity
+        based on global best
+        :param numIterations: number of iterations to be performed
+        :return: (estimated parameters,
+            maximum value of the log likelihood,
+            global maximum likelihood over each iteration),
+        where the estimated parameters is a numpy array of shape (2,)
+        containing the shape and scale parameters in that order
         """
 
         def minFunc(param):
@@ -129,6 +155,21 @@ class GpdEstimate:
             learningRateMul=0.80,
             numIterations=10
     ):
+        """
+        Gradient Descent Line Search based method for maximum likelihood
+        estimation of GPD's parameters
+
+        :param data: the data, it is a numpy array of shape (n,)
+        :param initShapeParam: initial shape parameter
+        :param initScaleParam: initial scale parameter
+        :param learningRate: learning rate
+        :param learningRateMul: factor with which to multiply the
+        learning rate if parameters go out of the parameter domain
+        :param numIterations: number of iterations to be performed
+        :return: (estimated parameters, negative log likelihood over
+        each iteration)
+        """
+
         assert GeneralizedParetoDistribution\
             .checkParam(initShapeParam, initScaleParam, data)
 
@@ -159,7 +200,16 @@ class GpdEstimate:
 
     @staticmethod
     def computeGrad(shapeParam, scaleParam, data):
-        """  """
+        """
+        Computes the gradient of the log likelihood of the GPD distribution
+        with respect to the shape and scale parameters
+
+        :param shapeParam: shape parameter
+        :param scaleParam: scale parameter
+        :param data: the data, a numpy array of shape (n,)
+        :return: (derivative with respect to shape parameter,
+            derivative with respect to scale parameter)
+        """
 
         n = data.shape[0]
 
