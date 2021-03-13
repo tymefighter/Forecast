@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import genpareto
 from ts.experimental.pso import Pso
+from ts.experimental.grad_descent_line_search import GradDescentLineSearch
 
 
 class GeneralizedParetoDistribution:
@@ -77,18 +78,37 @@ class GeneralizedParetoDistribution:
                - (1 / shapeParam + 1) * np.sum(np.log(logArg), axis=0)
 
     @staticmethod
-    def checkParam(shapeParam, scaleParam, data):
+    def computeNegLogLikelihoodGrad(shapeParam, scaleParam, data):
         """
-        Check if the parameters are valid for the provided data
+        Computes the gradient of the log likelihood of the GPD distribution
+        with respect to the shape and scale parameters
 
-        :param shapeParam: shape parameter of the distribution
-        :param scaleParam: scale parameter of the distribution
-        :param data: data with respect to which the validity of
-        the parameters is to be checked
-        :return: True, if the parameters are valid, False otherwise
+        :param shapeParam: shape parameter
+        :param scaleParam: scale parameter
+        :param data: the data, a numpy array of shape (n,)
+        :return: (derivative with respect to shape parameter,
+            derivative with respect to scale parameter)
         """
 
-        return scaleParam > 0 and np.all(1 + shapeParam * data / scaleParam > 0)
+        n = data.shape[0]
+
+        if shapeParam == 0:
+            shapeGrad, scaleGrad = 0, n / scaleParam \
+                                   - np.sum(data, axis=0) / (scaleParam * scaleParam)
+
+        else:
+            logArg = 1 + shapeParam * data / scaleParam
+            shapeGrad = \
+                -np.sum(np.log(logArg), axis=0) / np.square(shapeParam) \
+                + (1 + 1 / shapeParam) * np.sum(data / logArg, axis=0) / scaleParam
+
+            scaleGrad = n / scaleParam \
+                        - ((1 + 1 / shapeParam)
+                           * shapeParam
+                           * (1 / np.square(scaleParam))
+                           * np.sum(data / logArg, axis=0))
+
+        return shapeGrad, scaleGrad
 
 
 class GpdEstimate:
@@ -126,7 +146,8 @@ class GpdEstimate:
         """
 
         def minFunc(param):
-            """  """
+            """ The function to minimize - negative log likelihood
+             of the data given the parameters """
 
             shapeParam, scaleParam = param[0], param[1]
             logLikelihood = GeneralizedParetoDistribution\
@@ -170,63 +191,23 @@ class GpdEstimate:
         each iteration)
         """
 
-        assert GeneralizedParetoDistribution\
-            .checkParam(initShapeParam, initScaleParam, data)
+        def minFunc(param):
+            """ The function to minimize - negative log likelihood
+             of the data given the parameters """
 
-        shapeParam, scaleParam = initShapeParam, initScaleParam
-        negLogLikelihoods = np.zeros((numIterations,))
+            negLogLikelihood = GeneralizedParetoDistribution\
+                .logLikelihood(param[0], param[1], data)
 
-        for iterNum in range(numIterations):
-            shapeGrad, scaleGrad = GpdEstimate.computeGrad(shapeParam, scaleParam, data)
+            return - negLogLikelihood if negLogLikelihood is not None else None
 
-            rate = learningRate
-            newShapeParam, newScaleParam = shapeParam - rate * shapeGrad,\
-                scaleParam - rate * scaleGrad
+        def gradFunc(param):
+            """ Computes the gradient of negative log likelihood
+            of the data given the parameters """
 
-            while not GeneralizedParetoDistribution\
-                    .checkParam(newShapeParam, newScaleParam, data):
+            return np.array(GeneralizedParetoDistribution
+                            .computeNegLogLikelihoodGrad(param[0], param[1], data))
 
-                rate *= learningRateMul
-                newShapeParam, newScaleParam = shapeParam - rate * shapeGrad, \
-                    scaleParam - rate * scaleGrad
-
-            shapeParam = newShapeParam
-            scaleParam = newScaleParam
-
-            negLogLikelihoods[iterNum] = -GeneralizedParetoDistribution\
-                .logLikelihood(shapeParam, scaleParam, data)
-
-        return np.array([shapeParam, scaleParam]), negLogLikelihoods
-
-    @staticmethod
-    def computeGrad(shapeParam, scaleParam, data):
-        """
-        Computes the gradient of the log likelihood of the GPD distribution
-        with respect to the shape and scale parameters
-
-        :param shapeParam: shape parameter
-        :param scaleParam: scale parameter
-        :param data: the data, a numpy array of shape (n,)
-        :return: (derivative with respect to shape parameter,
-            derivative with respect to scale parameter)
-        """
-
-        n = data.shape[0]
-
-        if shapeParam == 0:
-            shapeGrad, scaleGrad = 0, n / scaleParam \
-               - np.sum(data, axis=0) / (scaleParam * scaleParam)
-
-        else:
-            logArg = 1 + shapeParam * data / scaleParam
-            shapeGrad = \
-                -np.sum(np.log(logArg), axis=0) / np.square(shapeParam) \
-                + (1 + 1 / shapeParam) * np.sum(data / logArg, axis=0) / scaleParam
-
-            scaleGrad = n / scaleParam \
-                - ((1 + 1 / shapeParam)
-                   * shapeParam
-                   * (1 / np.square(scaleParam))
-                   * np.sum(data / logArg, axis=0))
-
-        return shapeGrad, scaleGrad
+        return GradDescentLineSearch.gradDescentLineSearch(
+            minFunc, gradFunc, np.array([initShapeParam, initScaleParam]),
+            learningRate, learningRateMul, numIterations
+        )
