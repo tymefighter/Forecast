@@ -83,10 +83,10 @@ class GeneralizedParetoDistribution:
                 + (1 + 1 / shapeParam) * np.sum(data / logArg, axis=0) / scaleParam
 
             scaleGrad = n / scaleParam \
-                        - ((1 + 1 / shapeParam)
-                           * shapeParam
-                           * (1 / np.square(scaleParam))
-                           * np.sum(data / logArg, axis=0))
+                - ((1 + 1 / shapeParam)
+                   * shapeParam
+                   * (1 / np.square(scaleParam))
+                   * np.sum(data / logArg, axis=0))
 
         return shapeGrad, scaleGrad
 

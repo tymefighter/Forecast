@@ -8,7 +8,12 @@ class GeneralizedExtremeValueDistribution:
 
     def __init__(self, shapeParam, locParam, scaleParam):
         """
+        Creates instance of the Generalized Extreme Value Distribution
+        based on the shape, location and scale parameters provided
 
+        :param shapeParam: shape parameter of the distribution
+        :param locParam: location parameter of the distribution
+        :param scaleParam: scale parameter of the distribution
         """
 
         self.shapeParam = shapeParam
