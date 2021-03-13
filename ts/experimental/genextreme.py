@@ -25,7 +25,7 @@ class GeneralizedExtremeValueDistribution:
         """
 
         return genextreme.rvs(
-            c=self.shapeParam, loc=self.locParam, scale=self.scaleParam,
+            c=-self.shapeParam, loc=self.locParam, scale=self.scaleParam,
             size=sampleShape
         )
 
