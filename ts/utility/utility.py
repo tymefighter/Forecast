@@ -329,3 +329,52 @@ class Utility:
                 size=(numSequences,)
             ))
         ]
+
+    @staticmethod
+    def applyBlockAggregateFunc(
+            data,
+            blockLength,
+            aggFunc,
+            considerPartial
+    ):
+        """
+        Apply block aggregation function on the provided data
+        sequence
+
+        :param data: the data, it is a numpy array of
+        shape (n, n1, n2, .., nr)
+        :param blockLength: length of each block
+        :param aggFunc: aggregation function, it takes as argument
+        a numpy array of shape (k, n1, n2, .., nr)
+        :param considerPartial: can take values from among
+        {'no-front', 'no-back', 'yes'}, where 'remove-front' means
+        to not consider the partial front block, remove-back' means
+        to not consider the partial back block, 'yes' means to
+        consider partial block
+        :return: aggregated data, it is a numpy array of shape
+        (m, n1, n2, .., nr), where m = floor(n / blockLength)
+        if considerPartial = 'no-front' or 'no-back',
+        m = ceil(n / blockLength) if considerPartial = 'yes'
+        """
+
+        if considerPartial == 'no-front':
+            data = data[data.shape[0] % blockLength:]
+        elif considerPartial == 'no-back':
+            extraLength = data.shape[0] % blockLength
+            data = data if extraLength == 0 else data[: -extraLength]
+
+        n = data.shape[0]
+        numValues = (n + blockLength - 1) // blockLength  # ceil division
+        aggSeqShape = list(data.shape)
+        aggSeqShape[0] = numValues
+        aggSeq = np.zeros(aggSeqShape)
+        aggIdx = 0
+        startIdx = 0
+
+        while startIdx < n:
+            endIdx = min(startIdx + blockLength, n)
+            aggSeq[aggIdx] = aggFunc(data[startIdx: endIdx])
+            startIdx = endIdx
+            aggIdx += 1
+
+        return aggSeq
