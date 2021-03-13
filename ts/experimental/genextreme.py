@@ -214,8 +214,10 @@ class GevEstimate:
             """ Computes the gradient of negative log likelihood
             of the data given the parameters """
 
-            return np.array(GeneralizedExtremeValueDistribution
-                .computeNegLogLikelihoodGrad(param[0], param[1], param[2], data))
+            return np.array(
+                GeneralizedExtremeValueDistribution.computeNegLogLikelihoodGrad(
+                    param[0], param[1], param[2], data
+                ))
 
         return GradDescentLineSearch.gradDescentLineSearch(
             minFunc, gradFunc, np.array([initShapeParam, initLocParam, initScaleParam]),
