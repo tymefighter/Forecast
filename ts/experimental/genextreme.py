@@ -29,10 +29,27 @@ class GeneralizedExtremeValueDistribution:
         of shape 'sampleShape'
         """
 
-        return genextreme.rvs(
+        # scipy.stats.genextreme's sampling method 'rvs seems to have a bug:
+        # it sometimes outputs points which have 0 probability of occurrence,
+        # I sample those values until none of the generated point have 0 prob
+        # of occurrence
+        data = genextreme.rvs(
             c=-self.shapeParam, loc=self.locParam, scale=self.scaleParam,
             size=sampleShape
         )
+
+        checkTrue = 1 + self.shapeParam * (data - self.locParam) / self.scaleParam <= 0
+
+        while np.any(checkTrue):
+            idx = np.where(checkTrue)
+            data[idx] = genextreme.rvs(
+                c=-self.shapeParam, loc=self.locParam, scale=self.scaleParam,
+                size=data[idx].shape
+            )
+
+            checkTrue = 1 + self.shapeParam * (data - self.locParam) / self.scaleParam <= 0
+
+        return data
 
     @staticmethod
     def logLikelihood(shapeParam, locParam, scaleParam, data):
