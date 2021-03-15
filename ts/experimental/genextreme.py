@@ -51,6 +51,48 @@ class GeneralizedExtremeValueDistribution:
 
         return data
 
+    def computeQuantile(self, p):
+        """
+
+        :param p:
+        :return:
+        """
+
+        pass
+
+    def pdf(self, x):
+        """
+        Compute PDF for all values in the input
+
+        :param x: scalar or a numpy array of any shape
+        :return: scalar value if x is scalar, or numpy array of shape
+        same as x if x is a numpy array. This is the PDF at every point in x
+        """
+
+        if self.shapeParam != 0:
+            posArg = 1 + self.shapeParam * (x - self.locParam) / self.scaleParam
+            return (posArg ** (-1. / self.shapeParam - 1)) \
+                * np.exp(-(posArg ** (-1. / self.shapeParam))) \
+                / self.scaleParam
+        else:
+            expData = np.exp(-(x - self.locParam) / self.scaleParam)
+            return np.exp(-expData) * expData / self.scaleParam
+
+    def cdf(self, x):
+        """
+        Compute CDF for all values in the input
+
+        :param x: scalar or a numpy array of any shape
+        :return: scalar value if x is scalar, or numpy array of shape
+        same as x if x is a numpy array. This is the CDF at every point in x
+        """
+
+        transformData = (x - self.locParam) / self.scaleParam
+        if self.shapeParam != 0:
+            return np.exp(- ((1 + self.shapeParam * transformData) ** (-1. / self.shapeParam)))
+        else:
+            return np.exp(- np.exp(-transformData))
+
     @staticmethod
     def logLikelihood(shapeParam, locParam, scaleParam, data):
         """
