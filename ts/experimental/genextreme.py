@@ -53,12 +53,19 @@ class GeneralizedExtremeValueDistribution:
 
     def computeQuantile(self, p):
         """
+        Compute the p-quantile of this distribution
 
-        :param p:
-        :return:
+        :param p: CDF probability
+        :return: the point z such that CDF(z) = p, i.e. the
+        p-quantile of this distribution
         """
 
-        pass
+        if self.shapeParam == 0:
+            return self.locParam - self.scaleParam * np.log(-np.log(p))
+
+        return self.locParam \
+            - ((self.scaleParam / self.shapeParam)
+               * (1 - ((-np.log(p)) ** (-self.shapeParam))))
 
     def pdf(self, x):
         """
