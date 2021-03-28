@@ -269,13 +269,16 @@ class Plot:
     @staticmethod
     def plotConfusionMatrixAsymmetric(yTrue, yPred, trueWidth, predWidth, precision=2):
         """
+        Plots an asymmetric confusion matrix. It is asymmetric in the sense that
+        the value intervals in the confusion matrix may be different for the true and
+        predicted series
 
-        :param yTrue:
-        :param yPred:
-        :param trueWidth:
-        :param predWidth:
-        :param precision:
-        :return:
+        :param yTrue: true series
+        :param yPred: predicted series
+        :param trueWidth: width of an interval for the true series
+        :param predWidth: width of an interval for the predicted series
+        :param precision: precision of the interval end points
+        :return: None
         """
 
         assert yTrue.shape == yPred.shape and len(yTrue.shape) == 1
@@ -318,12 +321,15 @@ class Plot:
     @staticmethod
     def plotConfusionMatrix(yTrue, yPred, width, precision=2):
         """
+        Plots the confusion matrix by first breaking up the true and predicted
+        values into intervals, and the counting the number of values that
+        lie in a cell.
 
-        :param yTrue:
-        :param yPred:
-        :param width:
-        :param precision:
-        :return:
+        :param yTrue: true series
+        :param yPred: predicted series
+        :param width: width of an interval
+        :param precision: precision of the interval end points
+        :return: None
         """
 
         assert yTrue.shape == yPred.shape and len(yTrue.shape) == 1
