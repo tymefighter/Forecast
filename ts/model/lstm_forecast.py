@@ -6,7 +6,7 @@ from ts.log import GlobalLogger
 
 
 class LstmForecast(RnnForecast):
-    """ LSTM univariate forecasting model """
+    """ LSTM forecasting model """
 
     @staticmethod
     def load(modelLoadPath):

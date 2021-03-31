@@ -6,7 +6,7 @@ from ts.log import GlobalLogger
 
 
 class SimpleRnnForecast(RnnForecast):
-    """ Simple RNN univariate forecasting model """
+    """ Simple RNN forecasting model """
 
     @staticmethod
     def load(modelLoadPath):

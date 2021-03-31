@@ -8,7 +8,7 @@ from ts.log import GlobalLogger
 
 class RnnForecast:
     """
-    RNN based univariate forecasting model which allows for any layer to
+    RNN based forecasting model which allows for any layer to
     be provided as input
     """
 

@@ -6,7 +6,7 @@ from ts.log import GlobalLogger
 
 
 class GruForecast(RnnForecast):
-    """ GRU univariate forecasting model """
+    """ GRU forecasting model """
 
     @staticmethod
     def load(modelLoadPath):

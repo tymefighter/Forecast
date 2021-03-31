@@ -9,7 +9,7 @@ from ts.log import GlobalLogger
 
 class RecurrentForecast:
     """
-    RNN based univariate forecasting model which allows for a list
+    RNN based forecasting model which allows for a list
     of layers to be provided
     """
 
