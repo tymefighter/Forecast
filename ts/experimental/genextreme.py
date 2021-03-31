@@ -29,10 +29,76 @@ class GeneralizedExtremeValueDistribution:
         of shape 'sampleShape'
         """
 
-        return genextreme.rvs(
+        # scipy.stats.genextreme's sampling method 'rvs seems to have a bug:
+        # it sometimes outputs points which have 0 probability of occurrence,
+        # I sample those values until none of the generated point have 0 prob
+        # of occurrence
+        data = genextreme.rvs(
             c=-self.shapeParam, loc=self.locParam, scale=self.scaleParam,
             size=sampleShape
         )
+
+        checkTrue = 1 + self.shapeParam * (data - self.locParam) / self.scaleParam <= 0
+
+        while np.any(checkTrue):
+            idx = np.where(checkTrue)
+            data[idx] = genextreme.rvs(
+                c=-self.shapeParam, loc=self.locParam, scale=self.scaleParam,
+                size=data[idx].shape
+            )
+
+            checkTrue = 1 + self.shapeParam * (data - self.locParam) / self.scaleParam <= 0
+
+        return data
+
+    def computeQuantile(self, p):
+        """
+        Compute the p-quantile of this distribution
+
+        :param p: CDF probability
+        :return: the point z such that CDF(z) = p, i.e. the
+        p-quantile of this distribution
+        """
+
+        if self.shapeParam == 0:
+            return self.locParam - self.scaleParam * np.log(-np.log(p))
+
+        return self.locParam \
+            - ((self.scaleParam / self.shapeParam)
+               * (1 - ((-np.log(p)) ** (-self.shapeParam))))
+
+    def pdf(self, x):
+        """
+        Compute PDF for all values in the input
+
+        :param x: scalar or a numpy array of any shape
+        :return: scalar value if x is scalar, or numpy array of shape
+        same as x if x is a numpy array. This is the PDF at every point in x
+        """
+
+        if self.shapeParam != 0:
+            posArg = 1 + self.shapeParam * (x - self.locParam) / self.scaleParam
+            return (posArg ** (-1. / self.shapeParam - 1)) \
+                * np.exp(-(posArg ** (-1. / self.shapeParam))) \
+                / self.scaleParam
+        else:
+            expData = np.exp(-(x - self.locParam) / self.scaleParam)
+            return np.exp(-expData) * expData / self.scaleParam
+
+    def cdf(self, x):
+        """
+        Compute CDF for all values in the input
+
+        :param x: scalar or a numpy array of any shape
+        :return: scalar value if x is scalar, or numpy array of shape
+        same as x if x is a numpy array. This is the CDF at every point in x
+        """
+
+        transformData = (x - self.locParam) / self.scaleParam
+        if self.shapeParam != 0:
+            return np.exp(- ((1 + self.shapeParam * transformData) ** (-1. / self.shapeParam)))
+        else:
+            return np.exp(- np.exp(-transformData))
 
     @staticmethod
     def logLikelihood(shapeParam, locParam, scaleParam, data):

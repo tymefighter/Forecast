@@ -31,6 +31,52 @@ class GeneralizedParetoDistribution:
             c=self.shapeParam, loc=0, scale=self.scaleParam, size=sampleShape
         )
 
+    def computeQuantile(self, p):
+        """
+        Compute the p-quantile of this distribution
+
+        :param p: CDF probability
+        :return: the point z such that CDF(z) = p, i.e. the
+        p-quantile of this distribution
+        """
+
+        if self.scaleParam != 0:
+            return self.scaleParam * ((1 - p) ** (-self.shapeParam) - 1) / self.shapeParam
+
+        else:
+            return - self.scaleParam * np.ln(1 - p)
+
+    def pdf(self, x):
+        """
+        Compute PDF for all values in the input
+
+        :param x: scalar or a numpy array of any shape
+        :return: scalar value if x is scalar, or numpy array of shape
+        same as x if x is a numpy array. This is the PDF at every point in x
+        """
+
+        if self.shapeParam != 0:
+            return (1 + self.shapeParam * x / self.scaleParam) ** (-1 / self.shapeParam - 1) \
+                / self.scaleParam
+
+        else:
+            return np.exp(-x / self.scaleParam) / self.scaleParam
+
+    def cdf(self, x):
+        """
+        Compute CDF for all values in the input
+
+        :param x: scalar or a numpy array of any shape
+        :return: scalar value if x is scalar, or numpy array of shape
+        same as x if x is a numpy array. This is the CDF at every point in x
+        """
+
+        if self.shapeParam != 0:
+            return 1 - (1 + self.shapeParam * x / self.scaleParam) ** (-1 / self.shapeParam)
+
+        else:
+            return 1 - np.exp(-x / self.scaleParam)
+
     @staticmethod
     def logLikelihood(shapeParam, scaleParam, data):
         """
@@ -48,6 +94,9 @@ class GeneralizedParetoDistribution:
         n = data.shape[0]
 
         if shapeParam == 0:
+            if np.any(data < 0):
+                return None
+
             return -n * np.log(scaleParam) - np.sum(data, axis=0) / scaleParam
 
         logArg = 1 + shapeParam * data / scaleParam

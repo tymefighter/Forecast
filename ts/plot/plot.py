@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
+import pandas as pd
 
 
 class Plot:
@@ -261,5 +263,102 @@ class Plot:
 
         table.set_fontsize(14)
         table.scale(3, 2.5)
+
+        plt.show()
+
+    @staticmethod
+    def plotConfusionMatrixAsymmetric(yTrue, yPred, trueWidth, predWidth, precision=2):
+        """
+        Plots an asymmetric confusion matrix. It is asymmetric in the sense that
+        the value intervals in the confusion matrix may be different for the true and
+        predicted series
+
+        :param yTrue: true series
+        :param yPred: predicted series
+        :param trueWidth: width of an interval for the true series
+        :param predWidth: width of an interval for the predicted series
+        :param precision: precision of the interval end points
+        :return: None
+        """
+
+        assert yTrue.shape == yPred.shape and len(yTrue.shape) == 1
+
+        minTrue, maxTrue = yTrue.min(), yTrue.max()
+        minPred, maxPred = yPred.min(), yPred.max()
+
+        trueValues = np.arange(minTrue, maxTrue + trueWidth, trueWidth)
+        numTrue = trueValues.shape[0]
+
+        predValues = np.arange(minPred, maxPred + predWidth, predWidth)
+        numPred = predValues.shape[0]
+
+        confusionMatrix = np.zeros((numTrue - 1, numPred - 1))
+
+        n = yTrue.shape[0]
+        for i in range(n):
+
+            trueIdx = int(yTrue[i] / trueWidth)
+            predIdx = int(yPred[i] / predWidth)
+
+            confusionMatrix[trueIdx, predIdx] += 1
+
+        trueStr = [f'{trueValues[i]: .{precision}f} - {trueValues[i + 1]: .{precision}f}' for i in range(numTrue - 1)]
+        predStr = [f'{predValues[i]: .{precision}f} - {predValues[i + 1]: .{precision}f}' for i in range(numPred - 1)]
+
+        confusionMatrixDf = pd.DataFrame(
+            confusionMatrix,
+            index=trueStr,
+            columns=predStr
+        )
+
+        plt.figure(figsize=(12, 12))
+        ax = sns.heatmap(confusionMatrixDf, annot=True)
+        ax.set_ylim(numTrue, 0)
+        ax.set_xlim(0, numPred)
+
+        plt.show()
+
+    @staticmethod
+    def plotConfusionMatrix(yTrue, yPred, width, precision=2):
+        """
+        Plots the confusion matrix by first breaking up the true and predicted
+        values into intervals, and the counting the number of values that
+        lie in a cell.
+
+        :param yTrue: true series
+        :param yPred: predicted series
+        :param width: width of an interval
+        :param precision: precision of the interval end points
+        :return: None
+        """
+
+        assert yTrue.shape == yPred.shape and len(yTrue.shape) == 1
+
+        minValue = min(yTrue.min(), yPred.min())
+        maxValue = max(yTrue.max(), yPred.max())
+
+        values = np.arange(minValue, maxValue + width, width)
+        numValues = values.shape[0]
+        confusionMatrix = np.zeros((numValues - 1, numValues - 1))
+
+        n = yTrue.shape[0]
+        for i in range(n):
+            trueIdx = int(yTrue[i] / width)
+            predIdx = int(yPred[i] / width)
+
+            confusionMatrix[trueIdx, predIdx] += 1
+
+        plotLabel = [f'{values[i]: .{precision}f} - {values[i + 1]: .{precision}f}' for i in range(numValues - 1)]
+
+        confusionMatrixDf = pd.DataFrame(
+            confusionMatrix,
+            index=plotLabel,
+            columns=plotLabel
+        )
+
+        plt.figure(figsize=(12, 12))
+        ax = sns.heatmap(confusionMatrixDf, annot=True)
+        ax.set_ylim(numValues, 0)
+        ax.set_xlim(0, numValues)
 
         plt.show()
