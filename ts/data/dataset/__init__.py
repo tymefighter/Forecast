@@ -5,3 +5,6 @@ from ts.data.dataset.indian_subdivision_rainfall import IndianSubdivisionRainfal
 from ts.data.dataset.nifty_fifty_stock import NiftyFiftyStock
 from ts.data.dataset.perth_temp_and_rainfall import PerthTempAndRainfall
 from ts.data.dataset.seattle_rainfall import SeattleRainfall
+from ts.data.dataset.delhi_climate import DelhiClimate
+from ts.data.dataset.bitcoin_stock import BitcoinStock
+from ts.data.dataset.yahoo_stock import YahooStock
