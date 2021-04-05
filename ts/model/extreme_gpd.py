@@ -67,30 +67,31 @@ class ExtremeGpd:
 
     def predict(self, timeSeries, getAllOutputs=False):
 
+        # Build Input
         inputData = []
-
         for i in range(self.lag, timeSeries.shape[0]):
             inputData.append(timeSeries[i - self.lag: i])
 
         inputData = np.array(inputData)
 
+        # Predict Timestep is Extreme or Not using Ensemble
         isExtreme = self.modelDetect.predict(inputData)
         isExtreme = np.squeeze(isExtreme, axis=1)
 
+        # Predict using Extreme Model
         predExtreme = self.gpd.computeQuantile(self.modelExtreme.predict(inputData)) \
             + self.threshold
         predExtreme = np.squeeze(predExtreme, axis=1)
 
+        # Predict using Normal Model
         predNormal = self.modelNormal.predict(inputData)
         predNormal = np.squeeze(predNormal, axis=1)
 
+        # Whenever Timestep is Extreme use Extreme Model, else use Normal
+        # Model's prediction
         predOutputs = np.zeros(predNormal.shape)
-
         for i in range(predOutputs.shape[0]):
-            if isExtreme[i]:
-                predOutputs[i] = predExtreme[i]
-            else:
-                predOutputs[i] = predNormal[i]
+            predOutputs[i] = predExtreme if isExtreme[i] else predNormal[i]
 
         if not getAllOutputs:
             return predOutputs
