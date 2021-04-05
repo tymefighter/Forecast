@@ -8,3 +8,4 @@ from ts.model.lstm_forecast import LstmForecast
 from ts.model.recurrent_forecast import RecurrentForecast
 from ts.model.gmm_hmm_forecast import GmmHmmForecast
 from ts.model.gmm_hmm_likelihood_similarity import GmmHmmLikelihoodSimilarity
+from ts.model.extreme_gpd import ExtremeGpd

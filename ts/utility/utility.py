@@ -378,3 +378,23 @@ class Utility:
             aggIdx += 1
 
         return aggSeq
+
+    @staticmethod
+    def getThresholdExceedingValues(timeSeries, threshold):
+        """
+        Get the Subsequence of the provided univariate time series
+        which only contains those values which exceed the
+        threshold
+
+        :param timeSeries: the time series whose threshold exceeding
+        values, we want to compute. It is a numpy array of shape (n,)
+        :param threshold: the threshold value
+        :return: subsequence of the provided univariate time series
+        which only contains those values which exceed the
+        threshold. Output is a numpy array of shape (m, ),
+        where m <= n
+        """
+
+        assert len(timeSeries.shape) == 1
+
+        return timeSeries[timeSeries > threshold]
