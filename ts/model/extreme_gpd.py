@@ -68,14 +68,11 @@ class ExtremeGpd:
     def predict(self, timeSeries, getAllOutputs=False):
 
         inputData = []
-        outputData = []
 
         for i in range(self.lag, timeSeries.shape[0]):
             inputData.append(timeSeries[i - self.lag: i])
-            outputData.append(timeSeries[i])
 
         inputData = np.array(inputData)
-        outputData = np.expand_dims(np.array(outputData), axis=1)
 
         isExtreme = self.modelDetect.predict(inputData)
         isExtreme = np.squeeze(isExtreme, axis=1)
