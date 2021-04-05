@@ -44,7 +44,7 @@ class GeneralizedParetoDistribution:
             return self.scaleParam * ((1 - p) ** (-self.shapeParam) - 1) / self.shapeParam
 
         else:
-            return - self.scaleParam * np.ln(1 - p)
+            return - self.scaleParam * np.log(1 - p)
 
     def pdf(self, x):
         """
