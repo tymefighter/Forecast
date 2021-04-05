@@ -45,7 +45,6 @@ class ExtremeGpd:
     def train(
             self,
             timeSeries,
-
             gpdParamRanges,
             numPsoParticles,
             numPsoIterations,
@@ -53,23 +52,31 @@ class ExtremeGpd:
             numNormalIterations,
             numEnsembleIterations
     ):
+        trainSummary = dict()
+
         # Estimate GPD Parameters
-        self.estimateParams(timeSeries, gpdParamRanges, numPsoParticles, numPsoIterations)
+        trainSummary['gpd-convergence'] = \
+            self.estimateParams(timeSeries, gpdParamRanges, numPsoParticles, numPsoIterations)
 
         # Train Extreme Model
-        self.trainExtremeModel(timeSeries, numExtremeIterations)
+        trainSummary['loss-extreme'] = \
+            self.trainExtremeModel(timeSeries, numExtremeIterations)
 
         # Train Normal Model
-        self.trainNormalModel(timeSeries, numNormalIterations)
+        trainSummary['loss-normal'] = \
+            self.trainNormalModel(timeSeries, numNormalIterations)
 
         # Train Ensemble Model
-        self.trainEnsembleModel(timeSeries, numEnsembleIterations)
+        trainSummary['loss-ensemble'] = \
+            self.trainEnsembleModel(timeSeries, numEnsembleIterations)
+
+        return trainSummary
 
     def predict(self, timeSeries, getAllOutputs=False):
 
         # Build Input
         inputData = []
-        for i in range(self.lag, timeSeries.shape[0]):
+        for i in range(self.lag, timeSeries.shape[0] + 1):
             inputData.append(timeSeries[i - self.lag: i])
 
         inputData = np.array(inputData)
@@ -91,7 +98,7 @@ class ExtremeGpd:
         # Model's prediction
         predOutputs = np.zeros(predNormal.shape)
         for i in range(predOutputs.shape[0]):
-            predOutputs[i] = predExtreme if isExtreme[i] else predNormal[i]
+            predOutputs[i] = predExtreme[i] if isExtreme[i] else predNormal[i]
 
         if not getAllOutputs:
             return predOutputs
@@ -113,7 +120,7 @@ class ExtremeGpd:
         params, maxLogLikelihood, maxLogLikelihoodValues = GpdEstimate.psoMethod(
             exceedSeries,
             Pso.computeInitialPos(gpdParamRanges, numPsoParticles),
-            numPsoIterations
+            numIterations=numPsoIterations
         )
 
         # Create the GPD Distribution Object
@@ -137,7 +144,10 @@ class ExtremeGpd:
         inputData = np.array(inputData)
         outputData = np.expand_dims(np.array(outputData), axis=1)
 
-        history = self.modelExtreme.fit(inputData, outputData, epochs=numExtremeIterations)
+        history = self.modelExtreme.fit(
+            inputData, outputData, epochs=numExtremeIterations,
+            verbose=0
+        )
 
         return history.history['loss']
 
@@ -155,7 +165,10 @@ class ExtremeGpd:
         inputData = np.array(inputData)
         outputData = np.expand_dims(np.array(outputData), axis=1)
 
-        history = self.modelNormal.fit(inputData, outputData, epochs=numNormalIterations)
+        history = self.modelNormal.fit(
+            inputData, outputData, epochs=numNormalIterations,
+            verbose=0
+        )
 
         return history.history['loss']
 
@@ -280,7 +293,7 @@ class MlpEnsemble:
             losses += np.array(history.history['loss'])
 
         losses /= len(self.models)
-        return
+        return losses
 
     def predict(self, inputData):
 
